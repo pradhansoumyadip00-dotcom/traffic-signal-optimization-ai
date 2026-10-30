@@ -21,7 +21,6 @@ modules = [
     "core.detection.accident_detector",
     "core.detection.vision_engine",
     "core.tracking.tracker",
-    "core.anpr.plate_reader",
     "core.agent.signal_controller",
     "utils.night_enhance",
     "utils.video_utils"

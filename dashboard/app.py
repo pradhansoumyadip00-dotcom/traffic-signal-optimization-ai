@@ -45,6 +45,10 @@ import core.agent.signal_controller
 importlib.reload(core.agent.signal_controller)
 from core.agent.signal_controller import AdaptiveSignalController, SignalState
 
+import core.detection.vision_engine
+importlib.reload(core.detection.vision_engine)
+from core.detection.vision_engine import VisionEngine
+
 from config.settings import TIME_FILTERS, NUM_LANES, VIDEOS_DIR
 
 # Page configuration
@@ -884,18 +888,6 @@ st.markdown(f"""
         text-transform: uppercase;
         display: inline-block;
     }}
-    .license-plate {{
-        background: {th['card_bg']};
-        border: 1.5px solid {th['accent']};
-        color: {th['text_primary']};
-        padding: 3px 8px;
-        border-radius: 6px;
-        font-family: 'JetBrains Mono', monospace;
-        font-weight: 700;
-        font-size: 0.85rem;
-        letter-spacing: 1px;
-        display: inline-block;
-    }}
 
     @media (max-width: 1200px) {{
         .sub-header-row {{
@@ -926,7 +918,6 @@ def fetch_safe_stats(db_manager, hours_window):
         "total_vehicles": len(vehicles),
         "total_violations": len(violations),
         "total_accidents": len(accidents),
-        "plates_identified": sum(1 for v in vehicles if v.get("plate_number") and str(v["plate_number"]).strip()),
         "vehicle_types": {row["vehicle_type"]: row["count"] for row in by_type},
         "lane_counts": {row["lane_id"]: row["count"] for row in by_lane},
         "hours_queried": hours_window
@@ -1364,6 +1355,8 @@ if selected_nav == "Vehicle Detection & Counting":
                 if run_image_clicked:
                     try:
                         import cv2
+                        import core.detection.vision_engine
+                        importlib.reload(core.detection.vision_engine)
                         from core.detection.vision_engine import VisionEngine
                         v_engine = VisionEngine(db_manager=db)
                         v_engine.reset()
@@ -1426,6 +1419,8 @@ if selected_nav == "Vehicle Detection & Counting":
 
                     try:
                         import cv2
+                        import core.detection.vision_engine
+                        importlib.reload(core.detection.vision_engine)
                         from core.detection.vision_engine import VisionEngine
                         v_engine = VisionEngine(db_manager=db)
                         v_engine.reset()

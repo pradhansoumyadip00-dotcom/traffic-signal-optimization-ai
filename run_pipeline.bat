@@ -1,4 +1,5 @@
-﻿@echo off
+@echo off
+cd /d "%~dp0"
 echo ====================================================
 echo Starting AI Traffic Video Processing Pipeline...
 echo ====================================================

@@ -12,9 +12,6 @@ numpy>=1.24.0               # Numerical computing
 torch>=2.1.0                # PyTorch for GPU inference
 torchvision>=0.16.0         # Image transforms
 
-# --- OCR (Number Plate Reading) ---
-easyocr>=1.7.0              # Optical Character Recognition
-
 # --- Database ---
 mysql-connector-python>=8.0 # MySQL database driver
 

@@ -24,13 +24,22 @@ scratch/
 # Large ML Weights (EasyOCR models auto-download on first use)
 data/models/easyocr/*.pth
 
-# Runtime Exports & User Uploads
+# Runtime Exports, Databases & User Uploads
 data/*.csv
 data/*.xlsx
 data/*.pdf
+data/*.db
+data/*.sqlite*
 data/uploads/*
 !data/uploads/.gitkeep
 data/video_timeline.json
 
-# Environment Secrets
+# Webcam & Violation Snapshots (Personal Data Protection)
+assets/images/violations/*
+!assets/images/violations/.gitkeep
+
+# Environment Secrets & Credentials
 .env
+.env.*
+*.pem
+*.key

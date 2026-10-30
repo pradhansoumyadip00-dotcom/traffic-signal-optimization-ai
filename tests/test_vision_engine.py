@@ -5,7 +5,6 @@ Validates the complete Computer Vision Core:
 - Frame processing
 - Night mode contrast enhancement
 - Tracking and annotations
-- ANPR plate reader ROI logic
 - Return statistics verification
 """
 
@@ -51,19 +50,7 @@ def run_tests():
     assert "lane_counts" in stats, "stats missing lane_counts"
     print(f"[PASS] process_frame() verified. Output stats: {stats}")
 
-    # 3. Test Plate Reader Lower ROI Cropping
-    car_bbox = [100, 100, 300, 400]
-    roi = engine.plate_reader.extract_plate_roi(test_frame, car_bbox)
-    assert roi.size > 0, "Plate ROI extraction returned empty image"
-    print(f"[PASS] ANPR Plate ROI extraction verified. Cropped dimensions: {roi.shape}")
-
-    # 4. Test Clean Plate Text Regex
-    raw_ocr = " WB-02. AB 1234 "
-    cleaned = engine.plate_reader.clean_plate_text(raw_ocr)
-    assert cleaned == "WB02AB1234", f"Expected WB02AB1234, got {cleaned}"
-    print(f"[PASS] Plate text normalization verified: '{raw_ocr}' -> '{cleaned}'")
-
-    # 5. Test Video File Feed (Sample traffic video)
+    # 3. Test Video File Feed (Sample traffic video)
     sample_vid = Path(__file__).resolve().parent.parent / "assets" / "videos" / "sample_traffic.mp4"
     if sample_vid.exists():
         cap = cv2.VideoCapture(str(sample_vid))

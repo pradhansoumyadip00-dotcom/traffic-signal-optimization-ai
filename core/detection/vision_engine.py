@@ -1,7 +1,7 @@
 """
 Master Vision Engine (Central AI Coordinator)
 ==============================================
-Orchestrates vehicle detection, ByteTrack tracking, ANPR plate reading,
+Orchestrates vehicle detection, ByteTrack tracking,
 helmet verification, accident alerts, night mode enhancement, and
 database logging in a single, unified pipeline.
 """
@@ -16,7 +16,6 @@ from core.detection.vehicle_detector import VehicleDetector
 from core.detection.helmet_detector import HelmetDetector
 from core.detection.accident_detector import AccidentDetector
 from core.tracking.tracker import VehicleTracker
-from core.anpr.plate_reader import PlateReader
 from database.db_manager import DatabaseManager
 from utils.night_enhance import NightEnhancer
 from utils.video_utils import draw_bbox, draw_counting_line, draw_stats_overlay
@@ -32,7 +31,6 @@ class VisionEngine:
         "Motorcycle": (50, 205, 50),     # Lime Green
         "Bus": (0, 215, 255),           # Amber Gold
         "Truck": (220, 20, 60),         # Crimson
-        "Plate": (255, 255, 255),       # White
         "Violation": (0, 0, 220),       # Red
         "Accident": (0, 0, 255)         # Bright Red
     }
@@ -42,7 +40,6 @@ class VisionEngine:
         self.tracker = VehicleTracker()
         self.helmet_detector = HelmetDetector()
         self.accident_detector = AccidentDetector()
-        self.plate_reader = PlateReader()
         self.night_enhancer = NightEnhancer()
 
         # Violation snapshot directory
@@ -69,34 +66,15 @@ class VisionEngine:
         tracked_objects = track_result["tracked_objects"]
         new_counts = track_result["new_counts"]
 
-        # 3. Process Tracked Vehicles (Plate OCR & DB Logging)
-        for vehicle in tracked_objects:
-            tid = vehicle["track_id"]
-            if tid not in self.plate_reader.plate_cache:
-                try:
-                    self.plate_reader.process_vehicle(
-                        enhanced_frame, vehicle["bbox"], tid, vehicle["class"]
-                    )
-                except Exception:
-                    pass
-
+        # 3. Log newly counted transit vehicles to database
         for vehicle in new_counts:
             tid = vehicle["track_id"]
-            plate_text = self.plate_reader.plate_cache.get(tid, "")
-            if not plate_text:
-                try:
-                    plate_text = self.plate_reader.process_vehicle(
-                        enhanced_frame, vehicle["bbox"], tid, vehicle["class"]
-                    )
-                except Exception:
-                    pass
-
             if record_to_db:
                 self.db.log_vehicle(
                     vehicle_type=vehicle["class"],
                     track_id=tid,
                     confidence=vehicle["confidence"],
-                    plate_number=plate_text,
+                    plate_number="",
                     lane_id=vehicle["lane_id"],
                     speed_estimate=vehicle.get("speed", 40.0)
                 )
@@ -173,20 +151,6 @@ class VisionEngine:
             cv2.rectangle(annotated, (x1, by1), (x1 + tw + 6, by2), color, -1)
             cv2.putText(annotated, badge_text, (x1 + 3, ty), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 0), 1, cv2.LINE_AA)
 
-            # Draw plate tag if cached or read
-            cached_plate = self.plate_reader.plate_cache.get(obj["track_id"])
-            if not cached_plate:
-                try:
-                    cached_plate = self.plate_reader.process_vehicle(enhanced_frame, obj["bbox"], obj["track_id"], obj.get("class", "Car"))
-                except Exception:
-                    pass
-            if cached_plate:
-                plate_badge = f"PLATE: {cached_plate}"
-                (pw, ph), _ = cv2.getTextSize(plate_badge, cv2.FONT_HERSHEY_SIMPLEX, 0.45, 1)
-                cv2.rectangle(annotated, (x1, y2), (x1 + pw + 10, y2 + ph + 8), (15, 15, 15), -1)
-                cv2.rectangle(annotated, (x1, y2), (x1 + pw + 10, y2 + ph + 8), (0, 220, 255), 1)
-                cv2.putText(annotated, plate_badge, (x1 + 4, y2 + ph + 4), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 220, 255), 1, cv2.LINE_AA)
-
         # Draw HUD Stats Overlay (top right)
         stats = {
             "Total Count": track_result["total_count"],
@@ -212,4 +176,3 @@ class VisionEngine:
     def reset(self):
         """Reset state counters and caches."""
         self.tracker.reset()
-        self.plate_reader.plate_cache.clear()

@@ -37,11 +37,6 @@ VEHICLE_CLASSES = {
 TRACKER_TYPE = "bytetrack"
 COUNTING_LINE_RATIO = 0.6
 
-# --- ANPR (Number Plate) Settings ---
-OCR_LANGUAGES = ["en"]
-PLATE_CONFIDENCE = 0.4
-PLATE_TEXT_MIN_LENGTH = 4
-
 # --- Night Mode / Low-Light Enhancement ---
 NIGHT_MODE_AUTO = True
 CLAHE_CLIP_LIMIT = 3.0

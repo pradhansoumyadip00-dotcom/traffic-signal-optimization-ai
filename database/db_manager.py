@@ -257,13 +257,11 @@ class DatabaseManager:
         by_lane = self.get_lane_distribution(hours=hours)
 
         total_v = len(vehicles)
-        plates_identified = sum(1 for v in vehicles if v.get("plate_number") and str(v.get("plate_number", "")).strip())
 
         return {
             "total_vehicles": total_v,
             "total_violations": len(violations),
             "total_accidents": len(accidents),
-            "plates_identified": plates_identified,
             "vehicle_types": {row["vehicle_type"]: row["count"] for row in by_type},
             "lane_counts": {row["lane_id"]: row["count"] for row in by_lane},
             "hours_queried": hours,
@@ -279,8 +277,8 @@ class DatabaseManager:
         a_data = [dict(r) for r in self.get_accidents(hours=hours)]
         s_data = [dict(r) for r in self.get_signal_logs(hours=hours)]
 
-        df_v = pd.DataFrame(v_data) if v_data else pd.DataFrame(columns=["id", "timestamp", "vehicle_type", "plate_number"])
-        df_h = pd.DataFrame(h_data) if h_data else pd.DataFrame(columns=["id", "timestamp", "plate_number", "confidence"])
+        df_v = pd.DataFrame(v_data) if v_data else pd.DataFrame(columns=["id", "timestamp", "vehicle_type", "track_id", "confidence", "lane_id", "speed_estimate"])
+        df_h = pd.DataFrame(h_data) if h_data else pd.DataFrame(columns=["id", "timestamp", "confidence", "track_id"])
         df_a = pd.DataFrame(a_data) if a_data else pd.DataFrame(columns=["id", "timestamp", "severity", "confidence"])
         df_s = pd.DataFrame(s_data) if s_data else pd.DataFrame(columns=["id", "timestamp", "lane_id", "state", "green_time"])
 
@@ -295,7 +293,7 @@ class DatabaseManager:
     def export_to_csv(self, output_path: str, hours: int = 24) -> str:
         """Export main vehicle logs to a clean CSV file."""
         v_data = [dict(r) for r in self.get_vehicles(hours=hours)]
-        df = pd.DataFrame(v_data) if v_data else pd.DataFrame(columns=["id", "timestamp", "vehicle_type", "plate_number"])
+        df = pd.DataFrame(v_data) if v_data else pd.DataFrame(columns=["id", "timestamp", "vehicle_type", "track_id", "confidence", "lane_id", "speed_estimate"])
         df.to_csv(output_path, index=False)
         return output_path
 
@@ -346,19 +344,19 @@ class DatabaseManager:
         pdf.set_text_color(15, 23, 42)
         pdf.set_font("helvetica", "B", 9)
         pdf.ln(2)
-        pdf.cell(40, 7, "Timestamp", border=1, fill=True)
-        pdf.cell(35, 7, "Class", border=1, fill=True)
-        pdf.cell(45, 7, "Plate Number", border=1, fill=True)
-        pdf.cell(35, 7, "Corridor Lane", border=1, fill=True)
+        pdf.cell(45, 7, "Timestamp", border=1, fill=True)
+        pdf.cell(35, 7, "Vehicle Class", border=1, fill=True)
+        pdf.cell(35, 7, "Track ID", border=1, fill=True)
+        pdf.cell(40, 7, "Corridor Lane", border=1, fill=True)
         pdf.cell(35, 7, "Speed (km/h)", new_x=XPos.LMARGIN, new_y=YPos.NEXT, border=1, fill=True)
 
         pdf.set_font("helvetica", "", 9)
         for row in vehicles[:25]:
-            pdf.cell(40, 6, str(row.get("timestamp", ""))[:19], border=1)
+            pdf.cell(45, 6, str(row.get("timestamp", ""))[:19], border=1)
             pdf.cell(35, 6, str(row.get("vehicle_type", "Unknown")), border=1)
-            pdf.cell(45, 6, str(row.get("plate_number", "") or "Unreadable"), border=1)
+            pdf.cell(35, 6, f"#{row.get('track_id', 0)}", border=1)
             lane_num = int(row.get('lane_id') or 0) + 1
-            pdf.cell(35, 6, f"Corridor {lane_num}", border=1)
+            pdf.cell(40, 6, f"Corridor {lane_num}", border=1)
             speed_val = float(row.get('speed_estimate') or 0.0)
             pdf.cell(35, 6, f"{speed_val:.1f} km/h", new_x=XPos.LMARGIN, new_y=YPos.NEXT, border=1)
 
@@ -374,15 +372,15 @@ class DatabaseManager:
             pdf.set_text_color(15, 23, 42)
             pdf.set_font("helvetica", "B", 9)
             pdf.ln(2)
-            pdf.cell(50, 7, "Timestamp", border=1, fill=True)
-            pdf.cell(50, 7, "Plate Number", border=1, fill=True)
+            pdf.cell(55, 7, "Timestamp", border=1, fill=True)
+            pdf.cell(45, 7, "Infraction", border=1, fill=True)
             pdf.cell(45, 7, "Confidence", border=1, fill=True)
             pdf.cell(45, 7, "Track ID", new_x=XPos.LMARGIN, new_y=YPos.NEXT, border=1, fill=True)
 
             pdf.set_font("helvetica", "", 9)
             for row in violations[:15]:
-                pdf.cell(50, 6, str(row.get("timestamp", ""))[:19], border=1)
-                pdf.cell(50, 6, str(row.get("plate_number", "") or "Unreadable"), border=1)
+                pdf.cell(55, 6, str(row.get("timestamp", ""))[:19], border=1)
+                pdf.cell(45, 6, "No Helmet", border=1)
                 conf_val = float(row.get('confidence') or 0.0)
                 pdf.cell(45, 6, f"{conf_val:.2f}", border=1)
                 pdf.cell(45, 6, str(row.get("track_id", 0)), new_x=XPos.LMARGIN, new_y=YPos.NEXT, border=1)

@@ -20,7 +20,6 @@ An AI-powered traffic management system that uses computer vision and adaptive s
 | **Vehicle Detection & Count** | YOLOv8 + ByteTrack for real-time vehicle detection and accurate counting |
 | **Adaptive Traffic Signal** | AI agent that dynamically adjusts signal timing based on traffic density |
 | **Night Mode** | CLAHE-based low-light enhancement for night-time detection |
-| **Auto Number Plate (ANPR)** | YOLO + EasyOCR for automatic license plate recognition |
 | **Helmet Detection** | Fine-tuned YOLOv8 to detect helmet violations on motorcycles |
 | **Accident Detection** | AI-based accident/collision detection with real-time alerts |
 | **Analytics Dashboard** | Streamlit-based web dashboard with interactive graphs and reports |
@@ -31,7 +30,6 @@ An AI-powered traffic management system that uses computer vision and adaptive s
 - **Language:** Python 3.10+
 - **AI Models:** YOLOv8 (Ultralytics)
 - **Tracking:** ByteTrack
-- **OCR:** EasyOCR
 - **Video:** OpenCV
 - **Database:** MySQL / SQLite
 - **Dashboard:** Streamlit + Plotly
@@ -46,7 +44,6 @@ AI project/
 |-- core/
 |   |-- detection/      # Vehicle, Helmet, Accident detectors
 |   |-- tracking/       # ByteTrack vehicle tracker
-|   |-- anpr/           # Number plate reader
 |   |-- agent/          # Adaptive signal controller
 |-- database/           # DB models and manager
 |-- dashboard/          # Streamlit web dashboard

@@ -20,7 +20,7 @@ def generate_traffic_video(output_path: str, duration_sec: int = 15, fps: int = 
     total_frames = duration_sec * fps
     lanes_x = [300, 500, 700, 900]
 
-    # Simulated vehicles: [x, y, speed, type, color, size, plate]
+    # Simulated vehicles: [x, y, speed, type, color, size]
     vehicles = []
     types = [
         ("Car", (50, 50, 220), (60, 110)),
@@ -45,7 +45,6 @@ def generate_traffic_video(output_path: str, duration_sec: int = 15, fps: int = 
             lane = random.choice(lanes_x)
             v_type, color, size = random.choice(types)
             speed = random.randint(4, 9)
-            plate_num = f"WB{random.randint(10,99)}AB{random.randint(1000,9999)}"
             vehicles.append({
                 "x": lane - size[0] // 2,
                 "y": -size[1],
@@ -53,8 +52,7 @@ def generate_traffic_video(output_path: str, duration_sec: int = 15, fps: int = 
                 "type": v_type,
                 "color": color,
                 "w": size[0],
-                "h": size[1],
-                "plate": plate_num
+                "h": size[1]
             })
 
         # Update and draw vehicles
@@ -74,11 +72,6 @@ def generate_traffic_video(output_path: str, duration_sec: int = 15, fps: int = 
                 # Headlights
                 cv2.circle(frame, (vx + 10, vy + vh - 10), 6, (0, 255, 255), -1)
                 cv2.circle(frame, (vx + vw - 10, vy + vh - 10), 6, (0, 255, 255), -1)
-
-                # Plate area
-                cv2.rectangle(frame, (vx + vw//4, vy + vh - 22), (vx + 3*vw//4, vy + vh - 6), (255, 255, 255), -1)
-                cv2.putText(frame, v["plate"][:4], (vx + vw//4 + 2, vy + vh - 10),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 0), 1)
 
                 active_vehicles.append(v)
         vehicles = active_vehicles
