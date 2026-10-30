@@ -1,0 +1,12 @@
+﻿version: '3.8'
+
+services:
+  traffic-ai:
+    build: .
+    container_name: traffic_signal_agent
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./data:/app/data
+      - ./assets:/app/assets
+    restart: unless-stopped

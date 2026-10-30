@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+env/
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log
+
+# Scratch, Testing & Backups
+scratch/
+.playwright-mcp/
+*.bak
+*.tmp
+*.swp
+
+# Large ML Weights (EasyOCR models auto-download on first use)
+data/models/easyocr/*.pth
+
+# Runtime Exports & User Uploads
+data/*.csv
+data/*.xlsx
+data/*.pdf
+data/uploads/*
+!data/uploads/.gitkeep
+data/video_timeline.json
+
+# Environment Secrets
+.env

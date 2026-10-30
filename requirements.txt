@@ -1,0 +1,32 @@
+# ============================================
+# Traffic Signal Optimization on Agent
+# Python Dependencies
+# ============================================
+
+# --- Core AI & Computer Vision ---
+ultralytics>=8.2.0          # YOLOv8 detection & tracking
+opencv-python>=4.9.0        # Video processing & image manipulation
+numpy>=1.24.0               # Numerical computing
+
+# --- Deep Learning (GPU - RTX 3050) ---
+torch>=2.1.0                # PyTorch for GPU inference
+torchvision>=0.16.0         # Image transforms
+
+# --- OCR (Number Plate Reading) ---
+easyocr>=1.7.0              # Optical Character Recognition
+
+# --- Database ---
+mysql-connector-python>=8.0 # MySQL database driver
+
+# --- Dashboard & Visualization ---
+streamlit>=1.30.0           # Web dashboard framework
+plotly>=5.18.0              # Interactive charts & graphs
+pandas>=2.1.0               # Data manipulation & export
+
+# --- Export ---
+openpyxl>=3.1.0             # Excel file export
+fpdf2>=2.7.0                # Executive PDF audit report generator
+
+# --- Utilities ---
+Pillow>=10.0.0              # Image processing
+lap>=0.4.0                  # Linear assignment for ByteTrack
