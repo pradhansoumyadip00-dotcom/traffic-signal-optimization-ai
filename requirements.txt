@@ -5,7 +5,7 @@
 
 # --- Core AI & Computer Vision ---
 ultralytics>=8.2.0          # YOLOv8 detection & tracking
-opencv-python>=4.9.0        # Video processing & image manipulation
+opencv-python-headless>=4.9.0 # Video processing (headless cloud-ready)
 numpy>=1.24.0               # Numerical computing
 
 # --- Deep Learning (GPU - RTX 3050) ---
@@ -26,4 +26,4 @@ fpdf2>=2.7.0                # Executive PDF audit report generator
 
 # --- Utilities ---
 Pillow>=10.0.0              # Image processing
-lap>=0.4.0                  # Linear assignment for ByteTrack
+lapx>=0.5.2                 # Linear assignment for ByteTrack (pre-built wheels)

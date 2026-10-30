@@ -44,7 +44,7 @@ CLAHE_TILE_SIZE = (8, 8)
 BRIGHTNESS_THRESHOLD = 70
 
 # --- Database Settings ---
-USE_SQLITE = False
+USE_SQLITE = True
 SQLITE_DB_PATH = str(BASE_DIR / "data" / "traffic_data.db")
 
 MYSQL_CONFIG = {
