@@ -1,30 +1,40 @@
+import sys
+import os
+from pathlib import Path
+
+# Bind project root and dashboard directory to sys.path immediately
+BASE_DIR = Path(__file__).resolve().parent.parent
+DASHBOARD_DIR = Path(__file__).resolve().parent
+for _p in [str(BASE_DIR), str(DASHBOARD_DIR)]:
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
+
 import streamlit as st
 import streamlit.components.v1 as components
 import io
 import importlib
-import dashboard.simulation_2d
-importlib.reload(dashboard.simulation_2d)
-from dashboard.simulation_2d import get_simulation_html
 import pandas as pd
 import numpy as np
 import math
 import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
-from pathlib import Path
 import tempfile
-import importlib
-import sys
-import os
 import time
 import gc
 import json
 import urllib.request
 import urllib.error
 
-# Root directory binding
-BASE_DIR = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(BASE_DIR))
+# Simulation engine import with safe fallback
+try:
+    import dashboard.simulation_2d as simulation_2d
+    importlib.reload(simulation_2d)
+    from dashboard.simulation_2d import get_simulation_html
+except ImportError:
+    import simulation_2d
+    importlib.reload(simulation_2d)
+    from simulation_2d import get_simulation_html
 
 # Dynamic reload to ensure live updates without server restart
 import database.db_manager
@@ -40,7 +50,7 @@ from config.settings import TIME_FILTERS, NUM_LANES, VIDEOS_DIR
 # Page configuration
 st.set_page_config(
     page_title="Smart Traffic Management System | Control Room",
-    page_icon="&#128654;",
+    page_icon="🚦",
     layout="wide",
     initial_sidebar_state="expanded"
 )
