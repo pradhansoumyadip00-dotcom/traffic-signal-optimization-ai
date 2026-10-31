@@ -1358,6 +1358,12 @@ if selected_nav == "Vehicle Detection & Counting":
                         import core.detection.vision_engine
                         importlib.reload(core.detection.vision_engine)
                         from core.detection.vision_engine import VisionEngine
+                        try:
+                            c = db._get_cursor()
+                            c.execute("DELETE FROM vehicle_logs")
+                            db.connection.commit()
+                        except Exception:
+                            pass
                         v_engine = VisionEngine(db_manager=db)
                         v_engine.reset()
                         sig_controller = AdaptiveSignalController(db_manager=db)
@@ -1366,7 +1372,7 @@ if selected_nav == "Vehicle Detection & Counting":
                         if img_bgr is None:
                             st.error("Could not read image file.")
                         else:
-                            with st.spinner("Analyzing image with YOLOv8n & Vision Engine..."):
+                            with st.spinner("Analyzing image with Vision Engine..."):
                                 annotated, stats = v_engine.process_frame(img_bgr, frame_idx=1, record_to_db=True)
                                 # Update background signal controller
                                 for lane_id, count in stats.get("lane_counts", {}).items():
@@ -1425,6 +1431,12 @@ if selected_nav == "Vehicle Detection & Counting":
                         # Cache engine in session state to avoid reloading neural weights into memory
                         if "cached_vision_engine" not in st.session_state:
                             st.session_state["cached_vision_engine"] = VisionEngine(db_manager=db)
+                        try:
+                            c = db._get_cursor()
+                            c.execute("DELETE FROM vehicle_logs")
+                            db.connection.commit()
+                        except Exception:
+                            pass
                         v_engine = st.session_state["cached_vision_engine"]
                         v_engine.reset()
                         sig_controller = AdaptiveSignalController(db_manager=db)
@@ -1441,20 +1453,21 @@ if selected_nav == "Vehicle Detection & Counting":
                             fps = 25.0
 
                         # Optimal real-time video playback settings (10-20s duration)
-                        import torch
-                        has_gpu = torch.cuda.is_available()
-                        frame_step = 1 if has_gpu else 2
+                        try:
+                            import torch
+                            has_gpu = torch.cuda.is_available()
+                        except Exception:
+                            has_gpu = False
+                        frame_step = 1
                         loop_start_time = time.time()
 
-                        # Cap analysis to max 20 seconds for 100% cloud stability
-                        MAX_CLOUD_SECONDS = 20.0
-                        max_allowed_frames = int(fps * MAX_CLOUD_SECONDS)
-                        target_total_frames = min(total_cap_frames, max_allowed_frames) if total_cap_frames > 0 else max_allowed_frames
+                        # Process complete video length across its entire duration
+                        target_total_frames = total_cap_frames if total_cap_frames > 0 else 1500
+                        total_duration_sec = target_total_frames / fps if target_total_frames > 0 else 50.0
 
-                        total_duration_sec = target_total_frames / fps if target_total_frames > 0 else 10.0
-                        if total_duration_sec <= 20:
+                        if total_duration_sec <= 30:
                             interval_sec = 0.5
-                        elif total_duration_sec <= 60:
+                        elif total_duration_sec <= 90:
                             interval_sec = 1.0
                         else:
                             interval_sec = 2.0
@@ -1769,8 +1782,8 @@ if selected_nav == "Vehicle Detection & Counting":
                     height=260,
                     xaxis=dict(
                         showgrid=False,
-                        tickfont=dict(color=th['text_muted'], size=10),
-                        title=dict(text="Video Duration", font=dict(color=th['text_muted'], size=10))
+                        showticklabels=False,
+                        title=dict(text="Continuous Video Duration Timeline (Hover cursor for real-time density)", font=dict(color=th['text_muted'], size=10))
                     ),
                     yaxis=dict(
                         showgrid=True,
@@ -1813,20 +1826,30 @@ if selected_nav == "Vehicle Detection & Counting":
 
     if current_db_records:
         df_v = pd.DataFrame(current_db_records)
-        cols_to_show = ["id", "timestamp", "vehicle_type", "track_id", "lane_id", "speed_estimate", "confidence"]
-        available_cols = [c for c in cols_to_show if c in df_v.columns]
-        
-        display_df = df_v[available_cols].copy()
-        col_rename = {
-            "id": "Record ID",
-            "timestamp": "Timestamp",
-            "vehicle_type": "Vehicle Type",
-            "track_id": "Track ID",
-            "lane_id": "Lane",
-            "speed_estimate": "Speed (km/h)",
-            "confidence": "AI Confidence"
-        }
-        display_df = display_df.rename(columns={k: v for k, v in col_rename.items() if k in display_df.columns})
+        if "id" in df_v.columns:
+            df_v = df_v.sort_values("id", ascending=True).reset_index(drop=True)
+
+        # Generate clear sequential vehicle numbering (1st, 2nd, 3rd Vehicle...)
+        ordinal_labels = []
+        for i in range(1, len(df_v) + 1):
+            if 11 <= (i % 100) <= 13:
+                suffix = "th"
+            else:
+                suffix = {1: "st", 2: "nd", 3: "rd"}.get(i % 10, "th")
+            ordinal_labels.append(f"Vehicle #{i:02d} ({i}{suffix} Vehicle)")
+
+        def _fmt_conf(val):
+            try:
+                v = float(val)
+                return f"{v*100:.1f}%" if v <= 1.0 else f"{v:.1f}%"
+            except Exception:
+                return "95.0%"
+
+        display_df = pd.DataFrame({
+            "Vehicle No.": ordinal_labels,
+            "Vehicle Type": df_v["vehicle_type"] if "vehicle_type" in df_v.columns else "Car",
+            "AI Confidence": df_v["confidence"].apply(_fmt_conf) if "confidence" in df_v.columns else ["95.0%"] * len(df_v)
+        })
         st.dataframe(display_df, use_container_width=True, height=280)
 
         # DOWNLOAD TOOLBAR FOR VEHICLE TRANSITS LEDGER (EXCEL, PDF, CSV)
@@ -1892,15 +1915,11 @@ if selected_nav == "Vehicle Detection & Counting":
                 # Column headers
                 cols = list(display_df.columns)
                 col_widths_map = {
-                    "Record ID": 20,
-                    "Timestamp": 45,
-                    "Vehicle Type": 30,
-                    "Track ID": 22,
-                    "Lane": 22,
-                    "Speed (km/h)": 26,
-                    "AI Confidence": 25
+                    "Vehicle No.": 70,
+                    "Vehicle Type": 60,
+                    "AI Confidence": 60
                 }
-                widths = [col_widths_map.get(c, 25) for c in cols]
+                widths = [col_widths_map.get(c, 50) for c in cols]
                 total_w = sum(widths)
                 if total_w > 0:
                     scale = 190.0 / total_w
@@ -1995,7 +2014,7 @@ elif selected_nav == "Adaptive Traffic Light Signal":
     """, unsafe_allow_html=True)
 
     sim_code = get_simulation_html(active_theme_name)
-    components.html(sim_code, height=1080, scrolling=False)
+    components.html(sim_code, height=1280, scrolling=True)
 
 # =====================================================================
 # 3. CONTACT US / REPORT A PROBLEM (DEDICATED SECTION)

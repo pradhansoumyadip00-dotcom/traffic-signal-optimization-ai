@@ -29,7 +29,8 @@ def get_simulation_html(theme="Soft Sand") -> str:
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     color: #e2e8f0;
     overflow-x: hidden;
-    padding: 0;
+    overflow-y: auto;
+    padding: 0 0 35px 0;
   }
   .sim-container {
     background: #080e21;
@@ -100,6 +101,7 @@ def get_simulation_html(theme="Soft Sand") -> str:
     flex-wrap: wrap;
     gap: 10px;
     position: relative;
+    min-height: 52px;
   }
   .btn-group {
     display: flex;
@@ -249,6 +251,8 @@ def get_simulation_html(theme="Soft Sand") -> str:
     display: flex;
     align-items: center;
     gap: 6px;
+    min-height: 24px;
+    white-space: nowrap;
   }
   .status-text strong {
     color: #00f0ff;
@@ -324,6 +328,7 @@ def get_simulation_html(theme="Soft Sand") -> str:
     position: relative;
     overflow: hidden;
     transition: all 0.2s ease;
+    min-height: 106px;
   }
   .kpi-card:hover {
     border-color: #D8C2B3;
@@ -404,6 +409,7 @@ def get_simulation_html(theme="Soft Sand") -> str:
     border: 1px solid #EAE3D9;
     border-radius: 12px;
     padding: 12px 14px;
+    min-height: 220px;
   }
   .chart-header {
     display: flex;
@@ -1507,15 +1513,15 @@ def get_simulation_html(theme="Soft Sand") -> str:
     }
   }, 100);
 
-  // Background steady traffic injection
+  // Background steady traffic injection (Continuous dense vehicle stream)
   setInterval(() => {
     if (isPaused) return;
     for (let app = 0; app < 4; app++) {
-      if (Math.random() < 0.28) {
+      if (Math.random() < 0.70) {
         spawnSafe(app);
       }
     }
-  }, 1800);
+  }, 950);
 
   // Periodic evaluation deck refresh (every 300ms)
   setInterval(() => {
@@ -1524,8 +1530,8 @@ def get_simulation_html(theme="Soft Sand") -> str:
     }
   }, 300);
 
-  // Initial population
-  for (let i = 0; i < 8; i++) {
+  // Initial population (Dense traffic across all 4 corridors)
+  for (let i = 0; i < 20; i++) {
     spawnSafe(i % 4);
   }
 
@@ -1616,7 +1622,7 @@ def get_simulation_html(theme="Soft Sand") -> str:
     greenElapsedMs = 0;
     yellowElapsedMs = 0;
     allRedElapsedMs = 0;
-    for (let i = 0; i < 8; i++) spawnSafe(i % 4);
+    for (let i = 0; i < 20; i++) spawnSafe(i % 4);
     updateEvaluationDeck();
     showToast('🔄 Simulation Reset: Normal flow restarted.');
   });

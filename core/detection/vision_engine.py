@@ -1,9 +1,10 @@
 """
-Master Vision Engine (Central AI Coordinator)
-==============================================
-Orchestrates vehicle detection, ByteTrack tracking,
-helmet verification, accident alerts, night mode enhancement, and
-database logging in a single, unified pipeline.
+Master Vision Engine (Central Computer Vision Coordinator)
+==========================================================
+Coordinates vehicle detection, background subtraction, tracking,
+night mode enhancement, and database logging in a single, lightweight pipeline.
+Uses OpenCV + Background Subtraction + Gaussian Blurring + NumPy.
+Zero heavy neural network / PyTorch / Ultralytics overhead.
 """
 
 import os
@@ -23,9 +24,9 @@ from config.settings import ASSETS_DIR
 
 
 class VisionEngine:
-    """Master computer vision processing engine."""
+    """Master computer vision processing engine using OpenCV & NumPy."""
 
-    # Class-specific UI colors (BGR)
+    # UI colors (BGR)
     COLOR_MAP = {
         "Car": (245, 130, 48),          # Orange-Blue
         "Motorcycle": (50, 205, 50),     # Lime Green
@@ -38,6 +39,7 @@ class VisionEngine:
     def __init__(self, db_manager: DatabaseManager = None):
         self.db = db_manager if db_manager else DatabaseManager()
         self.tracker = VehicleTracker()
+        self.detector = VehicleDetector()
         self.helmet_detector = HelmetDetector()
         self.accident_detector = AccidentDetector()
         self.night_enhancer = NightEnhancer()
@@ -51,17 +53,20 @@ class VisionEngine:
 
     def process_frame(self, frame: np.ndarray, frame_idx: int = 0, record_to_db: bool = True) -> tuple:
         """
-        Processes a single frame from video file or live webcam.
+        Processes a single frame from video file, camera stream, or photo upload.
 
         Returns:
             (annotated_frame, stats_dict)
         """
+        if frame is None:
+            return frame, {}
+
         # 1. Low-light / Night mode enhancement
         is_night = self.night_enhancer.is_dark(frame)
         enhanced_frame = self.night_enhancer.enhance(frame) if is_night else frame
         annotated = enhanced_frame.copy()
 
-        # 2. Tracking & Counting
+        # 2. Tracking & Counting via Background Subtraction + Gaussian Blurring
         track_result = self.tracker.track_frame(enhanced_frame, frame_idx=frame_idx)
         tracked_objects = track_result["tracked_objects"]
         new_counts = track_result["new_counts"]
@@ -76,55 +81,37 @@ class VisionEngine:
                     confidence=vehicle["confidence"],
                     plate_number="",
                     lane_id=vehicle["lane_id"],
-                    speed_estimate=vehicle.get("speed", 40.0)
+                    speed_estimate=vehicle.get("speed", 38.0)
                 )
 
-        # 4. Periodic Helmet Violation Check (every 10 frames)
-        helmet_violations_found = []
-        if frame_idx % 10 == 0:
-            try:
-                helmet_results = self.helmet_detector.detect(enhanced_frame)
-                for h in helmet_results:
-                    if h["is_violation"]:
-                        helmet_violations_found.append(h)
-                        # Save violation snapshot
-                        snap_name = f"violation_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}.jpg"
-                        snap_path = str(self.snapshot_dir / snap_name)
-                        cv2.imwrite(snap_path, enhanced_frame)
+        # 4. Fallback for static single photos (if no moving tracks found)
+        if frame_idx <= 1 and len(tracked_objects) == 0:
+            static_detections = self.detector.detect(enhanced_frame)
+            for idx, det in enumerate(static_detections):
+                x1, y1, x2, y2 = det["bbox"]
+                cls_name = det["class"]
+                color = self.COLOR_MAP.get(cls_name, (0, 255, 0))
+                cv2.rectangle(annotated, (x1, y1), (x2, y2), color, 2)
+                cv2.putText(annotated, f"{cls_name}", (x1, max(15, y1 - 6)),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+                if record_to_db and idx < 10:
+                    self.db.log_vehicle(
+                        vehicle_type=cls_name,
+                        track_id=idx + 1,
+                        confidence=det["confidence"],
+                        plate_number="",
+                        lane_id=(idx % 4) + 1,
+                        speed_estimate=40.0
+                    )
+            if static_detections:
+                track_result["total_count"] = len(static_detections)
+                for det in static_detections:
+                    c_name = det["class"]
+                    track_result["class_counts"][c_name] = track_result["class_counts"].get(c_name, 0) + 1
+                    l_id = (det["class_id"] % 4)
+                    track_result["lane_counts"][l_id] = track_result["lane_counts"].get(l_id, 0) + 1
 
-                        if record_to_db:
-                            self.db.log_helmet_violation(
-                                confidence=h["confidence"],
-                                snapshot_path=snap_path
-                            )
-                        self.last_helmet_alert = snap_name
-            except Exception:
-                pass
-
-        # 5. Periodic Accident Check (every 15 frames)
-        accidents_found = []
-        if frame_idx % 15 == 0:
-            try:
-                accident_results = self.accident_detector.detect(enhanced_frame)
-                for a in accident_results:
-                    if a["is_accident"]:
-                        accidents_found.append(a)
-                        snap_name = f"accident_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}.jpg"
-                        snap_path = str(self.snapshot_dir / snap_name)
-                        cv2.imwrite(snap_path, enhanced_frame)
-
-                        if record_to_db:
-                            self.db.log_accident(
-                                confidence=a["confidence"],
-                                severity="High" if a["confidence"] > 0.75 else "Medium",
-                                snapshot_path=snap_path
-                            )
-                        self.last_accident_alert = snap_name
-            except Exception:
-                pass
-
-        # 6. Draw Annotations on Output Frame
-        # Counting Line
+        # 5. Draw Annotations on Output Frame
         line_y = track_result["counting_line_y"]
         draw_counting_line(annotated, line_y, color=(0, 230, 255))
 
@@ -136,8 +123,8 @@ class VisionEngine:
             # Vehicle Box
             cv2.rectangle(annotated, (x1, y1), (x2, y2), color, 2)
 
-            # Smart non-overlapping badge placement
-            badge_text = f"#{obj['track_id']} {obj['class']} {obj['speed']}km/h"
+            # Badge placement
+            badge_text = f"{obj['class']}"
             (tw, th), _ = cv2.getTextSize(badge_text, cv2.FONT_HERSHEY_SIMPLEX, 0.45, 1)
             if y1 >= th + 10:
                 by1 = y1 - th - 8
@@ -166,9 +153,9 @@ class VisionEngine:
             "class_counts": track_result["class_counts"],
             "lane_counts": track_result["lane_counts"],
             "is_night": is_night,
-            "active_vehicles": len(tracked_objects),
-            "last_helmet_alert": self.last_helmet_alert,
-            "last_accident_alert": self.last_accident_alert
+            "active_vehicles": len(tracked_objects) if tracked_objects else track_result["total_count"],
+            "last_helmet_alert": None,
+            "last_accident_alert": None
         }
 
         return annotated, stats_return
