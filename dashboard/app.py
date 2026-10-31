@@ -3,8 +3,14 @@ import os
 from pathlib import Path
 
 # Bind project root and dashboard directory to sys.path immediately
-BASE_DIR = Path(__file__).resolve().parent.parent
-DASHBOARD_DIR = Path(__file__).resolve().parent
+_curr_path = Path(__file__).resolve()
+if _curr_path.parent.name == "dashboard":
+    BASE_DIR = _curr_path.parent.parent
+    DASHBOARD_DIR = _curr_path.parent
+else:
+    BASE_DIR = _curr_path.parent
+    DASHBOARD_DIR = BASE_DIR / "dashboard"
+
 for _p in [str(BASE_DIR), str(DASHBOARD_DIR)]:
     if _p not in sys.path:
         sys.path.insert(0, _p)
