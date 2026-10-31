@@ -110,17 +110,18 @@ class DatabaseManager:
 
     def log_vehicle(self, vehicle_type: str, track_id: int, confidence: float,
                     plate_number: str = "", lane_id: int = 0,
-                    speed_estimate: float = 0.0, snapshot_path: str = ""):
-        """Record a single detected vehicle into vehicle_logs."""
+                    speed_estimate: float = 0.0, snapshot_path: str = "",
+                    video_source: str = "Video 1"):
+        """Record a single detected vehicle into vehicle_logs with video source/session."""
         cursor = self._get_cursor()
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         placeholder = "?" if self.use_sqlite else "%s"
         sql = (
             f"INSERT INTO vehicle_logs "
-            f"(timestamp, vehicle_type, track_id, confidence, plate_number, lane_id, speed_estimate, snapshot_path) "
-            f"VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder})"
+            f"(timestamp, vehicle_type, track_id, confidence, plate_number, lane_id, speed_estimate, snapshot_path, video_source) "
+            f"VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder})"
         )
-        cursor.execute(sql, (now, vehicle_type, track_id, round(confidence, 3), plate_number, lane_id, round(speed_estimate, 1), snapshot_path))
+        cursor.execute(sql, (now, vehicle_type, track_id, round(confidence, 3), plate_number, lane_id, round(speed_estimate, 1), snapshot_path, video_source))
         self.connection.commit()
 
     def log_helmet_violation(self, confidence: float, plate_number: str = "",
@@ -166,13 +167,32 @@ class DatabaseManager:
 
     # ==================== QUERY & ANALYTICS OPERATIONS ====================
 
-    def get_vehicles(self, hours: int = 24) -> list:
-        """Get all vehicle records within the last N hours."""
+    def get_video_sessions(self) -> list:
+        """Get distinct video sources/sessions stored in the database."""
+        cursor = self._get_cursor()
+        try:
+            cursor.execute("SELECT DISTINCT video_source FROM vehicle_logs WHERE video_source IS NOT NULL AND video_source != '' ORDER BY id DESC")
+            rows = cursor.fetchall()
+            sessions = []
+            for r in rows:
+                val = r['video_source'] if isinstance(r, dict) and 'video_source' in r else r[0]
+                if val and val not in sessions:
+                    sessions.append(val)
+            return sessions
+        except Exception:
+            return []
+
+    def get_vehicles(self, hours: int = 48, video_source: str = None) -> list:
+        """Get vehicle records, optionally filtered by video source."""
         cursor = self._get_cursor()
         since = (datetime.now() - timedelta(hours=hours)).strftime("%Y-%m-%d %H:%M:%S")
         placeholder = "?" if self.use_sqlite else "%s"
-        sql = f"SELECT * FROM vehicle_logs WHERE timestamp >= {placeholder} ORDER BY timestamp DESC"
-        cursor.execute(sql, (since,))
+        if video_source and video_source != "All Videos Combined":
+            sql = f"SELECT * FROM vehicle_logs WHERE timestamp >= {placeholder} AND video_source = {placeholder} ORDER BY id ASC"
+            cursor.execute(sql, (since, video_source))
+        else:
+            sql = f"SELECT * FROM vehicle_logs WHERE timestamp >= {placeholder} ORDER BY id ASC"
+            cursor.execute(sql, (since,))
         return cursor.fetchall()
 
     def get_helmet_violations(self, hours: int = 24) -> list:

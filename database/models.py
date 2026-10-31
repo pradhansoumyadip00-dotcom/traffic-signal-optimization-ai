@@ -16,7 +16,8 @@ VEHICLE_LOG_SCHEMA = {
         "plate_number": "VARCHAR(50) DEFAULT ''",
         "lane_id": "INT DEFAULT 0",
         "speed_estimate": "FLOAT DEFAULT 0.0",
-        "snapshot_path": "VARCHAR(255) DEFAULT ''"
+        "snapshot_path": "VARCHAR(255) DEFAULT ''",
+        "video_source": "VARCHAR(100) DEFAULT 'Video 1'"
     },
     "indexes": [
         "CREATE INDEX IF NOT EXISTS idx_vlogs_timestamp ON vehicle_logs(timestamp)",

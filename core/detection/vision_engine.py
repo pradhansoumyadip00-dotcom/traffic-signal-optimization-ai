@@ -36,8 +36,9 @@ class VisionEngine:
         "Accident": (0, 0, 255)         # Bright Red
     }
 
-    def __init__(self, db_manager: DatabaseManager = None):
+    def __init__(self, db_manager: DatabaseManager = None, video_source: str = "Video 1"):
         self.db = db_manager if db_manager else DatabaseManager()
+        self.video_source = video_source
         self.tracker = VehicleTracker()
         self.detector = VehicleDetector()
         self.helmet_detector = HelmetDetector()
@@ -51,7 +52,11 @@ class VisionEngine:
         self.last_accident_alert = None
         self.last_helmet_alert = None
 
-    def process_frame(self, frame: np.ndarray, frame_idx: int = 0, record_to_db: bool = True) -> tuple:
+    def set_video_source(self, video_source: str):
+        """Set the active video source/session label for database logging."""
+        self.video_source = video_source
+
+    def process_frame(self, frame: np.ndarray, frame_idx: int = 0, record_to_db: bool = True, video_source: str = None) -> tuple:
         """
         Processes a single frame from video file, camera stream, or photo upload.
 
@@ -72,6 +77,7 @@ class VisionEngine:
         new_counts = track_result["new_counts"]
 
         # 3. Log newly counted transit vehicles to database
+        v_source = video_source or self.video_source or "Video 1"
         for vehicle in new_counts:
             tid = vehicle["track_id"]
             if record_to_db:
@@ -81,7 +87,8 @@ class VisionEngine:
                     confidence=vehicle["confidence"],
                     plate_number="",
                     lane_id=vehicle["lane_id"],
-                    speed_estimate=vehicle.get("speed", 38.0)
+                    speed_estimate=vehicle.get("speed", 38.0),
+                    video_source=v_source
                 )
 
         # 4. Fallback for static single photos (if no moving tracks found)
@@ -101,7 +108,8 @@ class VisionEngine:
                         confidence=det["confidence"],
                         plate_number="",
                         lane_id=(idx % 4) + 1,
-                        speed_estimate=40.0
+                        speed_estimate=40.0,
+                        video_source=v_source
                     )
             if static_detections:
                 track_result["total_count"] = len(static_detections)

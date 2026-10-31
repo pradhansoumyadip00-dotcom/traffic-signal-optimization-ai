@@ -1358,13 +1358,12 @@ if selected_nav == "Vehicle Detection & Counting":
                         import core.detection.vision_engine
                         importlib.reload(core.detection.vision_engine)
                         from core.detection.vision_engine import VisionEngine
-                        try:
-                            c = db._get_cursor()
-                            c.execute("DELETE FROM vehicle_logs")
-                            db.connection.commit()
-                        except Exception:
-                            pass
-                        v_engine = VisionEngine(db_manager=db)
+                        existing_sessions = db.get_video_sessions() if hasattr(db, "get_video_sessions") else []
+                        v_base = os.path.basename(selected_video) if selected_video else "Photo"
+                        current_video_label = f"Video {len(existing_sessions) + 1} ({v_base})"
+                        st.session_state["active_view_session"] = current_video_label
+
+                        v_engine = VisionEngine(db_manager=db, video_source=current_video_label)
                         v_engine.reset()
                         sig_controller = AdaptiveSignalController(db_manager=db)
 
@@ -1431,14 +1430,14 @@ if selected_nav == "Vehicle Detection & Counting":
                         # Cache engine in session state to avoid reloading neural weights into memory
                         if "cached_vision_engine" not in st.session_state:
                             st.session_state["cached_vision_engine"] = VisionEngine(db_manager=db)
-                        try:
-                            c = db._get_cursor()
-                            c.execute("DELETE FROM vehicle_logs")
-                            db.connection.commit()
-                        except Exception:
-                            pass
+                        existing_sessions = db.get_video_sessions() if hasattr(db, "get_video_sessions") else []
+                        v_base = os.path.basename(selected_video) if selected_video else "Upload"
+                        current_video_label = f"Video {len(existing_sessions) + 1} ({v_base})"
+                        st.session_state["active_view_session"] = current_video_label
+
                         v_engine = st.session_state["cached_vision_engine"]
                         v_engine.reset()
+                        v_engine.set_video_source(current_video_label)
                         sig_controller = AdaptiveSignalController(db_manager=db)
 
                         cap = cv2.VideoCapture(selected_video)
@@ -1815,17 +1814,45 @@ if selected_nav == "Vehicle Detection & Counting":
             """, unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
-    # 3. RECENT VEHICLE TRANSITS LEDGER (WITH EXCEL, PDF & CSV DOWNLOAD OPTIONS)
-    st.markdown(f"""
-    <div style="display: flex; justify-content: space-between; align-items: center; margin: 1.4rem 0 0.6rem 0;">
-        <h5 style="color: {th['text_primary']}; font-size: 0.88rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin: 0;">
-            Recent Vehicle Transits Ledger
-        </h5>
-    </div>
-    """, unsafe_allow_html=True)
+    # 3. RECENT VEHICLE TRANSITS LEDGER (WITH VIDEO RUN SELECTOR)
+    all_sessions = db.get_video_sessions() if hasattr(db, "get_video_sessions") else []
+    
+    col_t1, col_t2 = st.columns([52, 48], vertical_alignment="center")
+    with col_t1:
+        st.markdown(f"""
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <h5 style="color: {th['text_primary']}; font-size: 0.88rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin: 0;">
+                Recent Vehicle Transits Ledger
+            </h5>
+        </div>
+        """, unsafe_allow_html=True)
+    with col_t2:
+        if all_sessions:
+            selector_opts = all_sessions.copy()
+            if len(all_sessions) > 1:
+                selector_opts.append("All Videos Combined")
+            
+            active_sess = st.session_state.get("active_view_session")
+            def_idx = selector_opts.index(active_sess) if active_sess in selector_opts else 0
+            
+            selected_video_run = st.selectbox(
+                "Select Video Dataset",
+                options=selector_opts,
+                index=def_idx,
+                key="sel_video_run_dataset",
+                label_visibility="collapsed"
+            )
+        else:
+            selected_video_run = None
 
-    if current_db_records:
-        df_v = pd.DataFrame(current_db_records)
+    # Query filtered records based on chosen video run
+    if selected_video_run:
+        filtered_records = [dict(r) for r in db.get_vehicles(hours=active_hours, video_source=selected_video_run)] if hasattr(db, "get_vehicles") else []
+    else:
+        filtered_records = [dict(r) for r in db.get_vehicles(hours=active_hours)] if hasattr(db, "get_vehicles") else []
+
+    if filtered_records:
+        df_v = pd.DataFrame(filtered_records)
         if "id" in df_v.columns:
             df_v = df_v.sort_values("id", ascending=True).reset_index(drop=True)
 
