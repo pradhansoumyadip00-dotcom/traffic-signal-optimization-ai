@@ -1461,6 +1461,7 @@ if selected_nav == "Vehicle Detection & Counting":
 
                         frames_done = 0
                         processed_count = 0
+                        last_ui_update = 0.0
                         cumulative_counts = {"Car": 0, "Motorcycle": 0, "Bus": 0, "Truck": 0}
                         session_logged_vehicles = []
                         recent_detected_feed = []
@@ -1513,12 +1514,15 @@ if selected_nav == "Vehicle Detection & Counting":
                                 timeline_buckets[bucket_idx] = []
                             timeline_buckets[bucket_idx].append(active_now)
 
-                            # Stream real-time frame and live counters (every 3 processed frames for smooth network flow)
-                            if processed_count % 2 == 0 or frames_done >= target_total_frames:
-                                rgb_frame = cv2.cvtColor(annotated, cv2.COLOR_BGR2RGB)
+                            # Rate-limited compressed streaming: ensures smooth playback without connection drops
+                            cur_time = time.time()
+                            if cur_time - last_ui_update >= 0.12 or frames_done >= target_total_frames:
+                                last_ui_update = cur_time
+                                # Encode to JPEG for fast network transmission over tunnel
+                                _, encoded_frame = cv2.imencode('.jpg', annotated, [int(cv2.IMWRITE_JPEG_QUALITY), 75])
                                 live_img_placeholder.image(
-                                    rgb_frame,
-                                    caption=f"⚡ LIVE AI VISION FEED: Frame #{frames_done}/{target_total_frames} ({pct}%) | Normal Speed (1.0x Real-Time)",
+                                    encoded_frame.tobytes(),
+                                    caption=f"⚡ LIVE AI VISION FEED: Frame #{frames_done}/{target_total_frames} ({pct}%) | Real-time Analysis Active",
                                     use_container_width=True
                                 )
 
@@ -1581,10 +1585,16 @@ if selected_nav == "Vehicle Detection & Counting":
                         except Exception:
                             pass
 
-                        # Save analyzed counts into session
+                        # Keep final frame and detections persistently visible without abrupt rerun
+                        _, final_encoded = cv2.imencode('.jpg', annotated, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
+                        live_img_placeholder.image(
+                            final_encoded.tobytes(),
+                            caption=f"✅ FINAL ANALYSIS RESULT: Processed {frames_done} frames successfully! Bounding boxes & signals recorded.",
+                            use_container_width=True
+                        )
                         st.session_state["session_analysis_counts"] = cumulative_counts
-                        st.session_state["analysis_success_msg"] = f"✅ AI Video Analysis Complete: Successfully processed all {frames_done} frames! Real-time counts, classifications, and background signal transitions have been logged."
-                        st.rerun()
+                        st.success(f"✅ AI Video Analysis Complete: Successfully processed {frames_done} frames! All counts and signal timings updated below.")
+
                     except Exception as e:
                         prog.empty()
                         st.error(f"Inference execution error: {e}")
