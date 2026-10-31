@@ -10,3 +10,4 @@ if str(ROOT_DIR) not in sys.path:
 # Run the primary dashboard application
 dashboard_path = ROOT_DIR / "dashboard" / "app.py"
 runpy.run_path(str(dashboard_path), run_name="__main__")
+
