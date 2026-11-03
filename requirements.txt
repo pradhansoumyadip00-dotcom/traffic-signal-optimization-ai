@@ -1,9 +1,11 @@
 # ============================================
 # Traffic Signal Optimization on Agent
-# Python Dependencies (Lightweight Cloud-Ready)
+# Python Dependencies
 # ============================================
 
-# --- Core Computer Vision & Processing ---
+# --- Deep Learning & Computer Vision ---
+torch>=2.0.0
+ultralytics>=8.0.0
 opencv-python-headless>=4.9.0
 numpy>=1.24.0
 
