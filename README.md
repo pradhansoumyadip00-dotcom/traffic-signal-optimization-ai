@@ -20,10 +20,9 @@ pinned: false
 | :--- | :--- |
 | **Project Title** | Intelligent Adaptive Traffic Signal Optimization with Computer Vision & Corridor Tracking |
 | **Course Code** | CSE276 |
-| **Group Number** | `[Group No. — e.g., Group-XX]` |
-| **Member 1 (Lead)** | `[Student Name 1]` — Registration No: `[Registration Number 1]` |
-| **Member 2** | `[Student Name 2]` — Registration No: `[Registration Number 2]` |
-| **Member 3** | `[Student Name 3]` — Registration No: `[Registration Number 3]` |
+| **Member 1 (Lead)** | `[Soumyadip Pradhan]` 
+| **Member 2** | `[Vishnu R]` 
+| **Member 3** | `[Japnoor Singh]` 
 | **Repository URL** | [https://github.com/pradhansoumyadip00-dotcom/traffic-signal-optimization-ai](https://github.com/pradhansoumyadip00-dotcom/traffic-signal-optimization-ai) |
 
 ---
