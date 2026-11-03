@@ -1162,9 +1162,9 @@ if selected_nav == "Vehicle Detection & Counting":
 
     with v_col1:
         if input_mode == "📹 Surveillance Video / Photo Upload":
-            # Discover all available local videos and photos
+            # Discover all available uploaded videos and photos
             available_media = {}
-            
+
             # Clean leftover trash files and index user uploads
             if os.path.exists(UPLOAD_DIR):
                 for f in sorted(os.listdir(UPLOAD_DIR), reverse=True):
@@ -1323,8 +1323,22 @@ if selected_nav == "Vehicle Detection & Counting":
                     st.error(f"Launch error: {ex}")
 
         # Action Buttons when media is available
+        line_ratio = 0.55
         if selected_video and os.path.exists(selected_video):
             st.markdown("<hr style='border: 0; border-top: 1px solid #D8C2B3; margin: 0.8rem 0 0.8rem 0;'>", unsafe_allow_html=True)
+            
+            # Continuous Line vertical position slider (moved up for optimal detection)
+            line_pos_pct = st.slider(
+                "📍 Continuous Line Height",
+                min_value=35,
+                max_value=80,
+                value=55,
+                step=1,
+                format="%d%%",
+                help="Adjust the vertical height of the Continuous Line (default 55%). Higher up allows earlier and smoother detection."
+            )
+            line_ratio = line_pos_pct / 100.0
+
             if is_image:
                 if not run_image_clicked:
                     run_image_clicked = st.button("⚡ Analyze Traffic Photo / Image", key="btn_run_image_analysis", use_container_width=True)
@@ -1361,7 +1375,12 @@ if selected_nav == "Vehicle Detection & Counting":
                 if run_image_clicked:
                     try:
                         import cv2
+                        import importlib
+                        import core.detection.vehicle_detector
+                        import core.tracking.tracker
                         import core.detection.vision_engine
+                        importlib.reload(core.detection.vehicle_detector)
+                        importlib.reload(core.tracking.tracker)
                         importlib.reload(core.detection.vision_engine)
                         from core.detection.vision_engine import VisionEngine
                         existing_sessions = db.get_video_sessions() if hasattr(db, "get_video_sessions") else []
@@ -1369,8 +1388,8 @@ if selected_nav == "Vehicle Detection & Counting":
                         current_video_label = f"Video {len(existing_sessions) + 1} ({v_base})"
                         st.session_state["active_view_session"] = current_video_label
 
-                        v_engine = VisionEngine(db_manager=db, video_source=current_video_label)
-                        v_engine.reset()
+                        v_engine = VisionEngine(db_manager=db, video_source=current_video_label, line_ratio=line_ratio)
+                        v_engine.reset(line_ratio=line_ratio)
                         sig_controller = AdaptiveSignalController(db_manager=db)
 
                         img_bgr = cv2.imread(selected_video)
@@ -1378,7 +1397,7 @@ if selected_nav == "Vehicle Detection & Counting":
                             st.error("Could not read image file.")
                         else:
                             with st.spinner("Analyzing image with Vision Engine..."):
-                                annotated, stats = v_engine.process_frame(img_bgr, frame_idx=1, record_to_db=True)
+                                annotated, stats = v_engine.process_frame(img_bgr, frame_idx=1, record_to_db=True, line_ratio=line_ratio)
                                 # Update background signal controller
                                 for lane_id, count in stats.get("lane_counts", {}).items():
                                     sig_controller.update_density(lane_id, count)
@@ -1430,20 +1449,24 @@ if selected_nav == "Vehicle Detection & Counting":
 
                     try:
                         import cv2
+                        import importlib
+                        import core.detection.vehicle_detector
+                        import core.tracking.tracker
                         import core.detection.vision_engine
+                        importlib.reload(core.detection.vehicle_detector)
+                        importlib.reload(core.tracking.tracker)
+                        importlib.reload(core.detection.vision_engine)
                         from core.detection.vision_engine import VisionEngine
 
-                        # Cache engine in session state to avoid reloading neural weights into memory
-                        if "cached_vision_engine" not in st.session_state:
-                            st.session_state["cached_vision_engine"] = VisionEngine(db_manager=db)
                         existing_sessions = db.get_video_sessions() if hasattr(db, "get_video_sessions") else []
                         v_base = os.path.basename(selected_video) if selected_video else "Upload"
                         current_video_label = f"Video {len(existing_sessions) + 1} ({v_base})"
                         st.session_state["active_view_session"] = current_video_label
 
-                        v_engine = st.session_state["cached_vision_engine"]
-                        v_engine.reset()
-                        v_engine.set_video_source(current_video_label)
+                        # Fresh high-accuracy VisionEngine instance with custom continuous line ratio
+                        v_engine = VisionEngine(db_manager=db, video_source=current_video_label, line_ratio=line_ratio)
+                        v_engine.reset(line_ratio=line_ratio)
+                        st.session_state["cached_vision_engine"] = v_engine
                         sig_controller = AdaptiveSignalController(db_manager=db)
 
                         cap = cv2.VideoCapture(selected_video)
@@ -1506,7 +1529,7 @@ if selected_nav == "Vehicle Detection & Counting":
                                 scale = 640.0 / w_orig
                                 frame = cv2.resize(frame, (640, int(h_orig * scale)), interpolation=cv2.INTER_AREA)
 
-                            annotated, stats = v_engine.process_frame(frame, frame_idx=frames_done, record_to_db=True)
+                            annotated, stats = v_engine.process_frame(frame, frame_idx=frames_done, record_to_db=True, line_ratio=line_ratio)
 
                             # Real-time speed governor: sync playback directly to recording FPS (1.0x Real-time)
                             target_elapsed = frames_done / max(1.0, fps)
@@ -1550,6 +1573,13 @@ if selected_nav == "Vehicle Detection & Counting":
                                 c_trucks = cumulative_counts.get("Truck", 0)
                                 total_v_now = c_cars + c_bikes + c_buses + c_trucks
 
+                                active_now = stats.get("active_vehicles", len(stats.get("class_counts", {})))
+                                act_counts = stats.get("active_class_counts", cumulative_counts)
+                                a_cars = act_counts.get("Car", 0)
+                                a_bikes = act_counts.get("Motorcycle", 0)
+                                a_buses = act_counts.get("Bus", 0)
+                                a_trucks = act_counts.get("Truck", 0)
+
                                 active_lane = sig_controller.current_green_lane
                                 lane_names = ["North (Lane 1)", "South (Lane 2)", "East (Lane 3)", "West (Lane 4)"]
                                 active_lane_name = lane_names[active_lane] if active_lane < len(lane_names) else f"Lane {active_lane+1}"
@@ -1558,16 +1588,16 @@ if selected_nav == "Vehicle Detection & Counting":
                                 live_counters_placeholder.markdown(f'''
                                 <div style="background: {th['card_bg']}; border: 1.5px solid {th['card_border']}; border-radius: 12px; padding: 10px 16px; margin-top: 8px; box-shadow: {th['card_shadow']};">
                                     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                                        <span style="font-weight: 700; color: {th['text_primary']}; font-size: 0.85rem;">🔴 Live Detections:</span>
+                                        <span style="font-weight: 700; color: {th['text_primary']}; font-size: 0.85rem;">🔴 Continuous Line Count:</span>
                                         <span style="background: {th['nav_bg']}; color: {th['text_primary']}; padding: 3px 10px; border-radius: 8px; font-weight: 700; font-size: 0.8rem;">🚗 Cars: {c_cars}</span>
                                         <span style="background: {th['nav_bg']}; color: {th['text_primary']}; padding: 3px 10px; border-radius: 8px; font-weight: 700; font-size: 0.8rem;">🏍️ Bikes: {c_bikes}</span>
                                         <span style="background: {th['nav_bg']}; color: {th['text_primary']}; padding: 3px 10px; border-radius: 8px; font-weight: 700; font-size: 0.8rem;">🚌 Buses: {c_buses}</span>
                                         <span style="background: {th['nav_bg']}; color: {th['text_primary']}; padding: 3px 10px; border-radius: 8px; font-weight: 700; font-size: 0.8rem;">🚛 Trucks: {c_trucks}</span>
-                                        <span style="background: {th['accent']}; color: {th['accent_text']}; padding: 3px 12px; border-radius: 8px; font-weight: 800; font-size: 0.82rem;">Total: {total_v_now}</span>
+                                        <span style="background: {th['accent']}; color: {th['accent_text']}; padding: 3px 12px; border-radius: 8px; font-weight: 800; font-size: 0.82rem;">Total Counted: {total_v_now}</span>
                                     </div>
                                     <div style="margin-top: 8px; padding-top: 6px; border-top: 1px dashed {th['nav_border']}; display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem;">
                                         <span>🚦 <strong>Background Signal Controller:</strong> Corridor {active_lane_name} is <span style="color: #22C55E; font-weight: 800;">GREEN</span> ({rem_sec}s allocated)</span>
-                                        <span style="color: {th['text_muted']};">Adaptive Webster Light Wave Active</span>
+                                        <span style="color: {th['text_muted']};">Live in Frame: {active_now} • Continuous Line Crossed: {total_v_now} (Zero Duplicates)</span>
                                     </div>
                                 </div>
                                 ''', unsafe_allow_html=True)

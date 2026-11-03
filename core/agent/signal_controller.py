@@ -167,7 +167,8 @@ class AdaptiveSignalController:
 
         for idx in candidate_lanes:
             lane = self.lanes[idx]
-            score = (lane.density * 100.0) + (lane.waiting_time_sec * 0.5)
+            # Balanced selection: queue count (10x) + density share (80x) + wait starvation (2x per sec)
+            score = (lane.vehicle_count * 10.0) + (lane.density * 80.0) + (lane.waiting_time_sec * 2.0)
             if score > highest_score:
                 highest_score = score
                 best_lane = idx

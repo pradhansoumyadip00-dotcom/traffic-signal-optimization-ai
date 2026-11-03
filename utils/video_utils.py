@@ -44,13 +44,27 @@ def draw_bbox(frame, bbox, label, color=(0, 255, 0), thickness=2):
     return frame
 
 
-def draw_counting_line(frame, y_position, color=(0, 0, 255)):
-    """Draw the vehicle counting line on the frame."""
+def draw_counting_line(frame, y_position, color=(0, 235, 255), label="Continuous Line"):
+    """Draw the prominent continuous vehicle counting line on the frame."""
     width = frame.shape[1]
+    # Dark border backing line for high contrast against light or dark pavement
+    cv2.line(frame, (0, y_position), (width, y_position), (15, 15, 15), 5)
+    # Vibrant glowing continuous radar line
     cv2.line(frame, (0, y_position), (width, y_position), color, 2)
+
+    # Stylish pill badge container for clean readability
+    badge_label = f"--- {label} ---"
+    (tw, th), _ = cv2.getTextSize(badge_label, cv2.FONT_HERSHEY_SIMPLEX, 0.48, 2)
+    bx1 = 14
+    by1 = max(4, y_position - th - 12)
+    bx2 = bx1 + tw + 16
+    by2 = max(th + 16, y_position - 2)
+
+    cv2.rectangle(frame, (bx1, by1), (bx2, by2), (20, 20, 20), -1)
+    cv2.rectangle(frame, (bx1, by1), (bx2, by2), color, 1)
     cv2.putText(
-        frame, "Counting Line", (10, y_position - 10),
-        cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2
+        frame, badge_label, (bx1 + 8, by2 - 5),
+        cv2.FONT_HERSHEY_SIMPLEX, 0.48, color, 2, cv2.LINE_AA
     )
     return frame
 

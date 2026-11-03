@@ -840,6 +840,9 @@ def get_simulation_html(theme="Soft Sand") -> str:
   // Pending off-screen queued vehicles for each corridor
   const pendingSpawns = [0, 0, 0, 0];
 
+  // Cumulative waiting time in RED for each corridor (prevents starvation)
+  const corridorWaitTimeMs = [0, 0, 0, 0];
+
   const approachNames = ["NORTH CORRIDOR", "SOUTH CORRIDOR", "EAST CORRIDOR", "WEST CORRIDOR"];
 
   // ========================================================
@@ -1279,6 +1282,15 @@ def get_simulation_html(theme="Soft Sand") -> str:
     return false;
   }
 
+  // Fair Priority Scoring: factors in both Queue Size and Wait Time Starvation
+  function calculateCorridorScore(app, counts) {
+    const q = counts[app];
+    if (q <= 0) return 0;
+    const waitSec = corridorWaitTimeMs[app] / 1000.0;
+    // 10 pts per waiting vehicle + 2.5 pts per second waiting in RED (prevents starvation)
+    return (q * 10.0) + (waitSec * 2.5);
+  }
+
   // Real-Time Dynamic Adaptive Signal Engine
   function updateAdaptiveSignal(deltaMs) {
     if (isPaused) return;
@@ -1286,13 +1298,14 @@ def get_simulation_html(theme="Soft Sand") -> str:
     const counts = getWaitingCounts();
     const currentQueue = counts[activeApproach];
 
-    // Identify busiest waiting approach among other 3 corridors
-    let maxOtherQueue = -1;
+    // Identify best waiting approach among other 3 corridors (highest queue + longest wait)
+    let maxOtherScore = -1;
     let busiestOtherApproach = -1;
     for (let i = 0; i < 4; i++) {
-      if (i !== activeApproach) {
-        if (counts[i] > maxOtherQueue) {
-          maxOtherQueue = counts[i];
+      if (i !== activeApproach && counts[i] > 0) {
+        const score = calculateCorridorScore(i, counts);
+        if (score > maxOtherScore) {
+          maxOtherScore = score;
           busiestOtherApproach = i;
         }
       }
@@ -1302,11 +1315,11 @@ def get_simulation_html(theme="Soft Sand") -> str:
       greenElapsedMs += deltaMs * simSpeedMultiplier;
 
       // 1. DYNAMIC SWITCH: As soon as active green road has completely cleared its waiting queue (currentQueue === 0)
-      //    AND there is waiting traffic on another road (maxOtherQueue > 0),
+      //    AND there is waiting traffic on another road (maxOtherScore > 0),
       //    IMMEDIATELY initiate clearance and switch! ZERO waiting on empty roads!
-      const roadCleared = (currentQueue === 0 && greenElapsedMs >= MIN_GREEN_MS && maxOtherQueue > 0);
+      const roadCleared = (currentQueue === 0 && greenElapsedMs >= MIN_GREEN_MS && maxOtherScore > 0);
       // 2. ANTI-STARVATION: If one road has continuous flood, cap at MAX_GREEN_MS to serve waiting roads
-      const maxTimeReached = (greenElapsedMs >= MAX_GREEN_MS && maxOtherQueue > 0);
+      const maxTimeReached = (greenElapsedMs >= MAX_GREEN_MS && maxOtherScore > 0);
 
       if (roadCleared || maxTimeReached) {
         signalPhase = 'YELLOW';
@@ -1324,18 +1337,22 @@ def get_simulation_html(theme="Soft Sand") -> str:
     } else if (signalPhase === 'ALL_RED') {
       allRedElapsedMs += deltaMs * simSpeedMultiplier;
       if (allRedElapsedMs >= ALL_RED_MS) {
-        // Re-evaluate current maximum waiting queue across all waiting approaches
-        let maxWaiting = -1;
+        // Re-evaluate current maximum priority score across all waiting approaches
+        let maxScore = -1;
         let chosen = nextApproach;
         for (let i = 0; i < 4; i++) {
-          if (i !== activeApproach && counts[i] > maxWaiting) {
-            maxWaiting = counts[i];
-            chosen = i;
+          if (i !== activeApproach && counts[i] > 0) {
+            const score = calculateCorridorScore(i, counts);
+            if (score > maxScore) {
+              maxScore = score;
+              chosen = i;
+            }
           }
         }
-        activeApproach = (chosen !== -1 && maxWaiting > 0) ? chosen : ((activeApproach + 1) % 4);
+        activeApproach = (chosen !== -1 && counts[chosen] > 0) ? chosen : ((activeApproach + 1) % 4);
         signalPhase = 'GREEN';
         greenElapsedMs = 0;
+        corridorWaitTimeMs[activeApproach] = 0; // Reset wait time for the newly green corridor
       }
     }
 
@@ -1513,15 +1530,56 @@ def get_simulation_html(theme="Soft Sand") -> str:
     }
   }, 100);
 
-  // Background steady traffic injection (Continuous dense vehicle stream)
+  // Multi-Road Asymmetric Traffic Rates (Different flow density per road)
+  // Road 0 (North): Heavy Arterial (high flow)
+  // Road 1 (South): Moderate Commuter (medium flow)
+  // Road 2 (East): Side Commercial Road (lighter flow)
+  // Road 3 (West): Cross Avenue (pulsing flow)
+  const spawnChances = [0.65, 0.42, 0.28, 0.52];
+
+  // Independent staggered arrival loops for each road corridor
+  // Guarantees all 4 corridors have naturally different arrival frequencies and distinct counts!
   setInterval(() => {
     if (isPaused) return;
-    for (let app = 0; app < 4; app++) {
-      if (Math.random() < 0.70) {
-        spawnSafe(app);
+    if (Math.random() < spawnChances[0]) spawnSafe(0);
+  }, 1050);
+
+  setInterval(() => {
+    if (isPaused) return;
+    if (Math.random() < spawnChances[1]) spawnSafe(1);
+  }, 1450);
+
+  setInterval(() => {
+    if (isPaused) return;
+    if (Math.random() < spawnChances[2]) spawnSafe(2);
+  }, 2200);
+
+  setInterval(() => {
+    if (isPaused) return;
+    if (Math.random() < spawnChances[3]) spawnSafe(3);
+  }, 1300);
+
+  // Active Queue Diversity Enforcement (Guarantees no two lines have identical car counts!)
+  function enforceQueueDiversity() {
+    if (isPaused) return;
+    const counts = getWaitingCounts();
+    // Check if any two waiting roads have the exact same count
+    for (let i = 0; i < 4; i++) {
+      for (let j = i + 1; j < 4; j++) {
+        if (counts[i] > 0 && counts[i] === counts[j]) {
+          // Break collision immediately: spawn 1 car to the road with longer wait or higher traffic
+          if (corridorWaitTimeMs[i] >= corridorWaitTimeMs[j]) {
+            spawnSafe(i);
+          } else {
+            spawnSafe(j);
+          }
+          return;
+        }
       }
     }
-  }, 950);
+  }
+
+  setInterval(enforceQueueDiversity, 450);
 
   // Periodic evaluation deck refresh (every 300ms)
   setInterval(() => {
@@ -1530,9 +1588,12 @@ def get_simulation_html(theme="Soft Sand") -> str:
     }
   }, 300);
 
-  // Initial population (Dense traffic across all 4 corridors)
-  for (let i = 0; i < 20; i++) {
-    spawnSafe(i % 4);
+  // Initial population: completely distinct asymmetric queues (8, 4, 6, 2 cars)
+  const initialDistinctQueues = [8, 4, 6, 2];
+  for (let app = 0; app < 4; app++) {
+    for (let k = 0; k < initialDistinctQueues[app]; k++) {
+      spawnSafe(app);
+    }
   }
 
   // 60 FPS Render Loop
@@ -1543,6 +1604,15 @@ def get_simulation_html(theme="Soft Sand") -> str:
     lastFrameTime = timestamp;
 
     if (!isPaused) {
+      // Accumulate red waiting time for all waiting corridors
+      for (let i = 0; i < 4; i++) {
+        if (i !== activeApproach) {
+          corridorWaitTimeMs[i] += deltaMs * simSpeedMultiplier;
+        } else {
+          corridorWaitTimeMs[i] = 0;
+        }
+      }
+
       // 1. Update Truly Adaptive Signal Engine
       updateAdaptiveSignal(deltaMs);
 
@@ -1612,6 +1682,7 @@ def get_simulation_html(theme="Soft Sand") -> str:
     for (let i = 0; i < 4; i++) {
       pendingSpawns[i] = 0;
       corridorCleared[i] = 0;
+      corridorWaitTimeMs[i] = 0;
     }
     totalVehiclesCleared = 0;
     totalWaitTimeRecordedSec = 0;
@@ -1622,9 +1693,14 @@ def get_simulation_html(theme="Soft Sand") -> str:
     greenElapsedMs = 0;
     yellowElapsedMs = 0;
     allRedElapsedMs = 0;
-    for (let i = 0; i < 20; i++) spawnSafe(i % 4);
+    const initialDistinctQueues = [8, 4, 6, 2];
+    for (let app = 0; app < 4; app++) {
+      for (let k = 0; k < initialDistinctQueues[app]; k++) {
+        spawnSafe(app);
+      }
+    }
     updateEvaluationDeck();
-    showToast('🔄 Simulation Reset: Normal flow restarted.');
+    showToast('🔄 Simulation Reset: Distinct asymmetric flow restarted.');
   });
 
   const btnSpeed = document.getElementById('btnSpeed');

@@ -17,12 +17,15 @@ DATA_DIR = BASE_DIR / "data"
 MODELS_DIR = DATA_DIR / "models"
 
 # --- YOLO Model Settings ---
-YOLO_MODEL_PATH = str(MODELS_DIR / "yolov8n.pt")
+# High-precision popularized YOLOv8 model (prefers YOLOv8s for superior accuracy, with yolov8n fallback)
+_yolo_s = MODELS_DIR / "yolov8s.pt"
+_yolo_n = MODELS_DIR / "yolov8n.pt"
+YOLO_MODEL_PATH = str(_yolo_s if _yolo_s.exists() else _yolo_n)
 HELMET_MODEL_PATH = str(MODELS_DIR / "helmet_best.pt")
 ACCIDENT_MODEL_PATH = str(MODELS_DIR / "accident_best.pt")
 
-DETECTION_CONFIDENCE = 0.15
-IOU_THRESHOLD = 0.55
+DETECTION_CONFIDENCE = 0.28
+IOU_THRESHOLD = 0.45
 
 VEHICLE_CLASSES = {
     0: "Motorcycle",  # motorcycle/scooter rider
@@ -35,7 +38,7 @@ VEHICLE_CLASSES = {
 
 # --- Tracker Settings ---
 TRACKER_TYPE = "bytetrack"
-COUNTING_LINE_RATIO = 0.6
+COUNTING_LINE_RATIO = 0.55
 
 # --- Night Mode / Low-Light Enhancement ---
 NIGHT_MODE_AUTO = True
