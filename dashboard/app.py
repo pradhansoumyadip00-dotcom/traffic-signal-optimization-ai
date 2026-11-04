@@ -2077,7 +2077,7 @@ elif selected_nav == "Adaptive Traffic Light Signal":
     """, unsafe_allow_html=True)
 
     sim_code = get_simulation_html(active_theme_name)
-    components.html(sim_code, height=1280, scrolling=True)
+    components.html(sim_code, height=1580, scrolling=True)
 
 # =====================================================================
 # 3. CONTACT US / REPORT A PROBLEM (DEDICATED SECTION)

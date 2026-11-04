@@ -789,6 +789,73 @@ def get_simulation_html(theme="Soft Sand") -> str:
         </div>
       </div>
     </div>
+
+    <!-- Real-Time Live Oscilloscope & 4-Way Traffic Demand Dynamics -->
+    <div class="chart-card" style="margin-top: 14px; padding: 14px 16px;">
+      <div class="chart-header" style="margin-bottom: 10px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 1rem;">📈</span>
+          <span style="font-size: 0.82rem; font-weight: 800; color: #2D2520;">Real-Time Intersection Traffic Flow &amp; Queue Dynamics</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <span style="display: flex; align-items: center; gap: 5px; font-size: 0.70rem; font-weight: 700; color: #FF6B4A;">
+            <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #FF6B4A; box-shadow: 0 0 6px #FF6B4A;"></span> Active Queue
+          </span>
+          <span style="display: flex; align-items: center; gap: 5px; font-size: 0.70rem; font-weight: 700; color: #10B981;">
+            <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10B981; box-shadow: 0 0 6px #10B981;"></span> Discharge Rate
+          </span>
+          <span class="tag-live" style="background: #E8F5E9; color: #2E7D32; border-color: #A5D6A7; font-weight: 800;">● LIVE 60 FPS</span>
+        </div>
+      </div>
+
+      <!-- Live Waveform Canvas -->
+      <div style="position: relative; width: 100%; height: 145px; background: #0A1120; border-radius: 10px; overflow: hidden; border: 1.5px solid #1E293B; box-shadow: inset 0 2px 8px rgba(0,0,0,0.5);">
+        <canvas id="rtWaveCanvas" width="900" height="145" style="width: 100%; height: 100%; display: block;"></canvas>
+        <div id="rtWaveHud" style="position: absolute; right: 10px; top: 8px; font-size: 0.68rem; font-family: monospace; color: #CBD5E1; background: rgba(15, 23, 42, 0.88); padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.12); pointer-events: none; backdrop-filter: blur(4px);">
+          Queue: <b id="rtHudQueue" style="color: #FF6B4A; font-size: 0.76rem;">0 cars</b> &bull; Throughput: <b id="rtHudThroughput" style="color: #10B981; font-size: 0.76rem;">0 veh/m</b>
+        </div>
+      </div>
+
+      <!-- Real-Time 4-Lane Demand Share Bar -->
+      <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid #EAE3D9;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <span style="font-size: 0.74rem; font-weight: 800; color: #54473F; text-transform: uppercase; letter-spacing: 0.4px;">
+            🚦 4-Way Lane Congestion Ratio &amp; Demand Distribution
+          </span>
+          <span style="font-size: 0.68rem; color: #8F857C; font-weight: 600;">
+            Real-Time Proportional Balance
+          </span>
+        </div>
+
+        <!-- Segmented Multi-Color Progress Bar -->
+        <div style="width: 100%; height: 14px; border-radius: 7px; overflow: hidden; display: flex; background: #E2E8F0; box-shadow: inset 0 1px 2px rgba(0,0,0,0.12);">
+          <div id="shareNorth" style="width: 25%; background: linear-gradient(90deg, #2563EB, #3B82F6); height: 100%; transition: width 0.3s ease;"></div>
+          <div id="shareSouth" style="width: 25%; background: linear-gradient(90deg, #D97706, #F59E0B); height: 100%; transition: width 0.3s ease;"></div>
+          <div id="shareEast" style="width: 25%; background: linear-gradient(90deg, #7C3AED, #8B5CF6); height: 100%; transition: width 0.3s ease;"></div>
+          <div id="shareWest" style="width: 25%; background: linear-gradient(90deg, #059669, #10B981); height: 100%; transition: width 0.3s ease;"></div>
+        </div>
+
+        <!-- 4 Micro Cards with live data -->
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 8px;">
+          <div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 6px; padding: 6px 8px; text-align: center;">
+            <span style="font-size: 0.68rem; font-weight: 700; color: #1D4ED8;">⬆️ North Road</span>
+            <div style="font-size: 0.85rem; font-weight: 900; color: #1E40AF;"><span id="shareVal0">0</span> cars <span style="font-size: 0.64rem; font-weight: 700; color: #3B82F6;">(<span id="sharePct0">25%</span>)</span></div>
+          </div>
+          <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 6px; padding: 6px 8px; text-align: center;">
+            <span style="font-size: 0.68rem; font-weight: 700; color: #B45309;">⬇️ South Road</span>
+            <div style="font-size: 0.85rem; font-weight: 900; color: #92400E;"><span id="shareVal1">0</span> cars <span style="font-size: 0.64rem; font-weight: 700; color: #D97706;">(<span id="sharePct1">25%</span>)</span></div>
+          </div>
+          <div style="background: #F5F3FF; border: 1px solid #DDD6FE; border-radius: 6px; padding: 6px 8px; text-align: center;">
+            <span style="font-size: 0.68rem; font-weight: 700; color: #6D28D9;">⬅️ East Road</span>
+            <div style="font-size: 0.85rem; font-weight: 900; color: #5B21B6;"><span id="shareVal2">0</span> cars <span style="font-size: 0.64rem; font-weight: 700; color: #7C3AED;">(<span id="sharePct2">25%</span>)</span></div>
+          </div>
+          <div style="background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 6px; padding: 6px 8px; text-align: center;">
+            <span style="font-size: 0.68rem; font-weight: 700; color: #047857;">➡️ West Road</span>
+            <div style="font-size: 0.85rem; font-weight: 900; color: #065F46;"><span id="shareVal3">0</span> cars <span style="font-size: 0.64rem; font-weight: 700; color: #059669;">(<span id="sharePct3">25%</span>)</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div> <!-- end eval-deck -->
 
 <script>
@@ -854,6 +921,12 @@ def get_simulation_html(theme="Soft Sand") -> str:
   let totalWaitTimeRecordedSec = 0;
   let peakQueueLength = 0;
   const queueHistory = [];
+
+  // Real-Time Oscilloscope Graph Data Buffer (60 points)
+  const RT_POINTS = 60;
+  const rtQueueData = new Array(RT_POINTS).fill(4);
+  const rtThroughputData = new Array(RT_POINTS).fill(28);
+  let lastChartSampleTime = 0;
 
   // Vehicles
   let vehicles = [];
@@ -1390,6 +1463,82 @@ def get_simulation_html(theme="Soft Sand") -> str:
     }
   }
 
+  // Real-Time Oscilloscope Renderer
+  function drawRealtimeOscilloscope() {
+    const waveCanvas = document.getElementById('rtWaveCanvas');
+    if (!waveCanvas) return;
+    const waveCtx = waveCanvas.getContext('2d');
+    if (!waveCtx) return;
+
+    const w = waveCanvas.width;
+    const h = waveCanvas.height;
+
+    // Dark high-tech oscilloscope grid background
+    waveCtx.fillStyle = '#0A1120';
+    waveCtx.fillRect(0, 0, w, h);
+
+    // Subtle Gridlines
+    waveCtx.strokeStyle = 'rgba(255, 255, 255, 0.06)';
+    waveCtx.lineWidth = 1;
+    for (let y = 18; y < h; y += 30) {
+      waveCtx.beginPath();
+      waveCtx.moveTo(0, y);
+      waveCtx.lineTo(w, y);
+      waveCtx.stroke();
+    }
+    for (let x = 0; x < w; x += 55) {
+      waveCtx.beginPath();
+      waveCtx.moveTo(x, 0);
+      waveCtx.lineTo(x, h);
+      waveCtx.stroke();
+    }
+
+    const step = w / (RT_POINTS - 1);
+
+    // Curve 1: Discharge Throughput (Emerald Green with subtle glow)
+    waveCtx.beginPath();
+    for (let i = 0; i < RT_POINTS; i++) {
+      const v = rtThroughputData[i];
+      const y = h - 10 - (v / 60) * (h - 24);
+      const x = i * step;
+      if (i === 0) waveCtx.moveTo(x, y);
+      else waveCtx.lineTo(x, y);
+    }
+    waveCtx.strokeStyle = '#10B981';
+    waveCtx.lineWidth = 2.2;
+    waveCtx.shadowColor = '#10B981';
+    waveCtx.shadowBlur = 6;
+    waveCtx.stroke();
+    waveCtx.shadowBlur = 0;
+
+    // Curve 2: Active Queue Pressure (Coral Orange with glowing pulse)
+    waveCtx.beginPath();
+    for (let i = 0; i < RT_POINTS; i++) {
+      const q = rtQueueData[i];
+      const y = h - 10 - (q / 22) * (h - 24);
+      const x = i * step;
+      if (i === 0) waveCtx.moveTo(x, y);
+      else waveCtx.lineTo(x, y);
+    }
+    waveCtx.strokeStyle = '#FF6B4A';
+    waveCtx.lineWidth = 2.6;
+    waveCtx.shadowColor = '#FF6B4A';
+    waveCtx.shadowBlur = 8;
+    waveCtx.stroke();
+    waveCtx.shadowBlur = 0;
+
+    // Tip pulse dot at the leading right edge
+    const lastQ = rtQueueData[RT_POINTS - 1];
+    const lastY = h - 10 - (lastQ / 22) * (h - 24);
+    waveCtx.fillStyle = '#FFFFFF';
+    waveCtx.beginPath();
+    waveCtx.arc(w - 3, lastY, 4, 0, Math.PI * 2);
+    waveCtx.fill();
+    waveCtx.strokeStyle = '#FF6B4A';
+    waveCtx.lineWidth = 2;
+    waveCtx.stroke();
+  }
+
   // ========================================================
   // REAL-TIME EVALUATION DECK CALCULATION & UPDATER
   // ========================================================
@@ -1483,6 +1632,47 @@ def get_simulation_html(theme="Soft Sand") -> str:
       }
       const cCleared = document.getElementById('cCleared' + i);
       if (cCleared) cCleared.textContent = corridorCleared[i];
+    }
+
+    // Sample & render Real-Time Oscilloscope Graph
+    const nowTime = performance.now();
+    if (nowTime - lastChartSampleTime >= 350) {
+      lastChartSampleTime = nowTime;
+      rtQueueData.shift();
+      rtQueueData.push(currentTotalQueue);
+      rtThroughputData.shift();
+      rtThroughputData.push(Math.min(55, Math.max(12, parseFloat(displayThroughput))));
+    }
+    drawRealtimeOscilloscope();
+
+    const hudQ = document.getElementById('rtHudQueue');
+    if (hudQ) hudQ.textContent = currentTotalQueue + ' cars';
+    const hudTp = document.getElementById('rtHudThroughput');
+    if (hudTp) hudTp.textContent = displayThroughput + ' veh/m';
+
+    // Update 4-Lane Dynamic Congestion & Demand Share Bar
+    const sumQueues = counts[0] + counts[1] + counts[2] + counts[3];
+    const totalQSafe = Math.max(1, sumQueues);
+    const pNorth = Math.round((counts[0] / totalQSafe) * 100);
+    const pSouth = Math.round((counts[1] / totalQSafe) * 100);
+    const pEast = Math.round((counts[2] / totalQSafe) * 100);
+    const pWest = Math.max(0, 100 - (pNorth + pSouth + pEast));
+
+    const sN = document.getElementById('shareNorth');
+    if (sN) sN.style.width = Math.max(4, pNorth) + '%';
+    const sS = document.getElementById('shareSouth');
+    if (sS) sS.style.width = Math.max(4, pSouth) + '%';
+    const sE = document.getElementById('shareEast');
+    if (sE) sE.style.width = Math.max(4, pEast) + '%';
+    const sW = document.getElementById('shareWest');
+    if (sW) sW.style.width = Math.max(4, pWest) + '%';
+
+    const pVals = [pNorth, pSouth, pEast, pWest];
+    for (let k = 0; k < 4; k++) {
+      const vEl = document.getElementById('shareVal' + k);
+      if (vEl) vEl.textContent = counts[k];
+      const pEl = document.getElementById('sharePct' + k);
+      if (pEl) pEl.textContent = (sumQueues === 0 ? 25 : pVals[k]) + '%';
     }
   }
 
