@@ -265,10 +265,30 @@ if active_theme_name not in THEMES:
     active_theme_name = "Soft Sand"
 th = THEMES[active_theme_name]
 
+# Static Font Preload (Loaded once so theme switching is instantaneous & never blocks CSSOM)
+st.markdown("""
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+""", unsafe_allow_html=True)
+
 # Dynamic CSS Injection based on chosen theme
 st.markdown(f"""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
+    :root {{
+        --app-bg: {th['app_bg']};
+        --sidebar-bg: {th['sidebar_bg']};
+        --card-bg: {th['card_bg']};
+        --card-border: {th['card_border']};
+        --text-primary: {th['text_primary']};
+        --text-secondary: {th['text_secondary']};
+        --accent: {th['accent']};
+    }}
+
+    /* Hardware-accelerated instantaneous visual theme transition */
+    .stApp, section[data-testid="stSidebar"], .kpi-card, .dark-card, .ctrl-panel {{
+        transition: background-color 0.12s ease, color 0.12s ease, border-color 0.12s ease !important;
+    }}
 
     /* 1. CLEAN STREAMLIT HEADER & PRESERVE SIDEBAR TOGGLE BUTTON (ORIGINAL NATURAL POSITION) */
     header[data-testid="stHeader"], .stAppHeader {{
@@ -1079,6 +1099,49 @@ with top_c3:
         key="header_theme_selector",
         on_change=_on_header_theme_change
     )
+
+    # Instant Client-Side Theme Switcher (Zero-Latency DOM Reaction on Click)
+    st.markdown("""
+    <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg'/>" onerror="
+    (function(){
+        var PAL = {
+            'Soft Sand': { bg: '#F5F2EC', side: '#EFECE6', card: '#F8F5F1', border: '#D8C2B3', text: '#2D2520' },
+            'Silver & White': { bg: '#F8F9FA', side: '#E9ECEF', card: '#FFFFFF', border: '#D0D5DD', text: '#0F172A' },
+            'Black & White': { bg: '#000000', side: '#0A0A0A', card: '#121212', border: '#2A2A2A', text: '#FFFFFF' },
+            'Nordic Civic Minimal': { bg: '#F4F6FB', side: '#EBF0FA', card: '#FFFFFF', border: '#DCE3F1', text: '#1A2238' }
+        };
+        function switchNow(name){
+            for (var k in PAL){
+                if (name.indexOf(k) !== -1 || k.indexOf(name) !== -1){
+                    var c = PAL[k];
+                    var app = document.querySelector('.stApp');
+                    if (app) { app.style.backgroundColor = c.bg; app.style.color = c.text; }
+                    var side = document.querySelector('section[data-testid=\'stSidebar\']');
+                    if (side) { side.style.backgroundColor = c.side; }
+                    var cards = document.querySelectorAll('.kpi-card, .dark-card, .ctrl-panel');
+                    for (var i=0; i<cards.length; i++) {
+                        cards[i].style.backgroundColor = c.card;
+                        cards[i].style.borderColor = c.border;
+                        cards[i].style.color = c.text;
+                    }
+                    break;
+                }
+            }
+        }
+        if (!window._stFastThemeHook) {
+            window._stFastThemeHook = true;
+            document.addEventListener('click', function(e){
+                var el = e.target;
+                var opt = el.closest('[role=\'option\']') || el.closest('li') || el.closest('[data-baseweb=\'menu\'] div');
+                if (opt) {
+                    var txt = (opt.textContent || opt.innerText || '').trim();
+                    switchNow(txt);
+                }
+            }, true);
+        }
+    })();
+    " style="display:none;" />
+    """, unsafe_allow_html=True)
 
 st.markdown(f'<hr style="border: 0; border-top: 1px solid {th["nav_border"]}; margin: 0.4rem 0 1rem 0;">', unsafe_allow_html=True)
 
