@@ -10,6 +10,7 @@ Validates the complete Computer Vision Core:
 
 import sys
 import os
+import unittest
 import cv2
 import numpy as np
 from pathlib import Path
@@ -67,6 +68,11 @@ def run_tests():
     print("=" * 60)
     print("  ALL COMPUTER VISION CORE TESTS PASSED (100% SUCCESS)!")
     print("=" * 60)
+
+
+class TestVisionEngine(unittest.TestCase):
+    def test_vision_engine_suite(self):
+        run_tests()
 
 
 if __name__ == "__main__":

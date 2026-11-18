@@ -28,7 +28,7 @@ data/models/easyocr/*.pth
 data/*.csv
 data/*.xlsx
 data/*.pdf
-data/*.db
+data/*.db*
 data/*.sqlite*
 data/uploads/*
 !data/uploads/.gitkeep

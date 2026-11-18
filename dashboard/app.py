@@ -34,25 +34,12 @@ import urllib.error
 
 # Simulation engine import with safe fallback
 try:
-    import dashboard.simulation_2d as simulation_2d
-    importlib.reload(simulation_2d)
     from dashboard.simulation_2d import get_simulation_html
 except ImportError:
-    import simulation_2d
-    importlib.reload(simulation_2d)
     from simulation_2d import get_simulation_html
 
-# Dynamic reload to ensure live updates without server restart
-import database.db_manager
-importlib.reload(database.db_manager)
 from database.db_manager import DatabaseManager
-
-import core.agent.signal_controller
-importlib.reload(core.agent.signal_controller)
 from core.agent.signal_controller import AdaptiveSignalController, SignalState
-
-import core.detection.vision_engine
-importlib.reload(core.detection.vision_engine)
 from core.detection.vision_engine import VisionEngine
 
 from config.settings import TIME_FILTERS, NUM_LANES, VIDEOS_DIR
@@ -81,7 +68,9 @@ THEMES = {
         "card_border": "#D8C2B3",
         "white_card_bg": "#FFFFFF",
         "white_card_border": "#E8DCCD",
+        "card_radius": "16px",
         "card_shadow": "0 6px 22px rgba(143, 133, 124, 0.08)",
+        "card_backdrop": "none",
         "text_primary": "#2D2520",
         "text_secondary": "#54473F",
         "text_muted": "#8F857C",
@@ -117,146 +106,152 @@ THEMES = {
         "signal_housing": "#E8DCCD",
         "signal_border": "#D8C2B3"
     },
-    "Silver & White": {
-        "name": "Silver & White",
-        "app_bg": "#F8F9FA",
-        "sidebar_bg": "#E9ECEF",
-        "sidebar_border": "#DEE2E6",
-        "nav_bg": "#E2E6EA",
-        "nav_border": "#CED4DA",
+    "Neo-Brutalism": {
+        "name": "Neo-Brutalism",
+        "app_bg": "#FFFDF0",
+        "sidebar_bg": "#FEF9C3",
+        "sidebar_border": "#000000",
+        "nav_bg": "#FEF08A",
+        "nav_border": "#000000",
         "card_bg": "#FFFFFF",
-        "card_border": "#D0D5DD",
+        "card_border": "#000000",
         "white_card_bg": "#FFFFFF",
-        "white_card_border": "#E2E8F0",
-        "card_shadow": "0 6px 20px rgba(100, 116, 139, 0.08)",
-        "text_primary": "#0F172A",
-        "text_secondary": "#475569",
-        "text_muted": "#64748B",
-        "accent": "#475569",
+        "white_card_border": "#000000",
+        "card_radius": "10px",
+        "card_shadow": "4px 4px 0px #000000",
+        "card_backdrop": "none",
+        "text_primary": "#000000",
+        "text_secondary": "#18181B",
+        "text_muted": "#52525B",
+        "accent": "#FF2E93",
         "accent_text": "#FFFFFF",
-        "btn_bg": "linear-gradient(135deg, #64748B 0%, #334155 100%)",
-        "btn_hover": "linear-gradient(135deg, #475569 0%, #1E293B 100%)",
-        "btn_border": "#94A3B8",
-        "badge_normal_bg": "#E2E8F0",
-        "badge_normal_text": "#0F172A",
-        "badge_normal_border": "#CBD5E1",
-        "card1_bg": "linear-gradient(135deg, #E2E8F0 0%, #CBD5E1 100%)",
-        "card1_border": "#94A3B8",
-        "card1_text": "#0F172A",
-        "card2_bg": "linear-gradient(135deg, #FFFFFF 0%, #E9ECEF 100%)",
-        "card2_border": "#CED4DA",
-        "card2_text": "#0F172A",
-        "card3_bg": "linear-gradient(135deg, #CBD5E1 0%, #94A3B8 100%)",
-        "card3_border": "#64748B",
-        "card3_text": "#0F172A",
-        "bar_fill": "linear-gradient(90deg, #94A3B8 0%, #475569 100%)",
-        "bar_track": "rgba(100, 116, 139, 0.18)",
+        "btn_bg": "linear-gradient(135deg, #FF2E93 0%, #FF007A 100%)",
+        "btn_hover": "linear-gradient(135deg, #FF007A 0%, #D60065 100%)",
+        "btn_border": "#000000",
+        "badge_normal_bg": "#FEF08A",
+        "badge_normal_text": "#000000",
+        "badge_normal_border": "#000000",
+        "card1_bg": "linear-gradient(135deg, #FEF08A 0%, #FDE047 100%)",
+        "card1_border": "#000000",
+        "card1_text": "#000000",
+        "card2_bg": "linear-gradient(135deg, #FFFFFF 0%, #FFFBEB 100%)",
+        "card2_border": "#000000",
+        "card2_text": "#000000",
+        "card3_bg": "linear-gradient(135deg, #FFD6E8 0%, #FFB3D9 100%)",
+        "card3_border": "#000000",
+        "card3_text": "#000000",
+        "bar_fill": "linear-gradient(90deg, #FACC15 0%, #FF2E93 100%)",
+        "bar_track": "rgba(0, 0, 0, 0.15)",
         "chart_bg": "#FFFFFF",
-        "chart_font": "#475569",
-        "chart_grid": "rgba(203, 213, 225, 0.6)",
-        "chart_line": "#475569",
-        "chart_fill": "rgba(148, 163, 184, 0.22)",
-        "chart_bar_colors": [[0, "#E2E8F0"], [0.5, "#94A3B8"], [1, "#475569"]],
-        "gauge_track": "#E2E8F0",
-        "gauge_stop1": "#94A3B8",
-        "gauge_stop2": "#475569",
-        "pie_colors": ["#334155", "#475569", "#64748B", "#94A3B8", "#CBD5E1"],
-        "signal_housing": "#E2E8F0",
-        "signal_border": "#CBD5E1"
+        "chart_font": "#000000",
+        "chart_grid": "rgba(0, 0, 0, 0.2)",
+        "chart_line": "#FF2E93",
+        "chart_fill": "rgba(255, 46, 147, 0.18)",
+        "chart_bar_colors": [[0, "#FEF08A"], [0.5, "#FACC15"], [1, "#FF2E93"]],
+        "gauge_track": "#FEF08A",
+        "gauge_stop1": "#FACC15",
+        "gauge_stop2": "#FF2E93",
+        "pie_colors": ["#FF2E93", "#FACC15", "#06B6D4", "#A855F7", "#22C55E"],
+        "signal_housing": "#FEF08A",
+        "signal_border": "#000000"
     },
-    "Black & White": {
-        "name": "Black & White",
-        "app_bg": "#000000",
-        "sidebar_bg": "#0A0A0A",
-        "sidebar_border": "#262626",
-        "nav_bg": "#141414",
-        "nav_border": "#333333",
-        "card_bg": "#111111",
-        "card_border": "#333333",
-        "white_card_bg": "#141414",
-        "white_card_border": "#404040",
-        "card_shadow": "none",
+    "Apple Bento": {
+        "name": "Apple Bento",
+        "app_bg": "#09090B",
+        "sidebar_bg": "#121215",
+        "sidebar_border": "rgba(255, 255, 255, 0.08)",
+        "nav_bg": "#1F1F23",
+        "nav_border": "rgba(255, 255, 255, 0.10)",
+        "card_bg": "#18181B",
+        "card_border": "rgba(255, 255, 255, 0.08)",
+        "white_card_bg": "#202024",
+        "white_card_border": "rgba(255, 255, 255, 0.10)",
+        "card_radius": "24px",
+        "card_shadow": "0 8px 30px rgba(0, 0, 0, 0.50)",
+        "card_backdrop": "none",
         "text_primary": "#FFFFFF",
-        "text_secondary": "#D4D4D4",
-        "text_muted": "#888888",
-        "accent": "#FFFFFF",
-        "accent_text": "#000000",
-        "btn_bg": "#1F1F1F",
-        "btn_hover": "#FFFFFF",
-        "btn_border": "#555555",
-        "badge_normal_bg": "#222222",
-        "badge_normal_text": "#FFFFFF",
-        "badge_normal_border": "#555555",
-        "card1_bg": "#181818",
-        "card1_border": "#444444",
-        "card1_text": "#FFFFFF",
-        "card2_bg": "#121212",
-        "card2_border": "#333333",
-        "card2_text": "#FFFFFF",
-        "card3_bg": "#1F1F1F",
-        "card3_border": "#555555",
-        "card3_text": "#FFFFFF",
-        "bar_fill": "#FFFFFF",
-        "bar_track": "#333333",
-        "chart_bg": "#0A0A0A",
-        "chart_font": "#FFFFFF",
-        "chart_grid": "rgba(255, 255, 255, 0.2)",
-        "chart_line": "#FFFFFF",
-        "chart_fill": "rgba(255, 255, 255, 0.08)",
-        "chart_bar_colors": [[0, "#444444"], [0.5, "#888888"], [1, "#FFFFFF"]],
-        "gauge_track": "#262626",
-        "gauge_stop1": "#888888",
-        "gauge_stop2": "#FFFFFF",
-        "pie_colors": ["#FFFFFF", "#CCCCCC", "#999999", "#666666", "#333333"],
-        "signal_housing": "#1A1A1A",
-        "signal_border": "#333333"
-    },
-    "Nordic Civic Minimal": {
-        "name": "Nordic Civic Minimal",
-        "app_bg": "#FAF8FF",
-        "sidebar_bg": "#F2F3FF",
-        "sidebar_border": "#DAE2FD",
-        "nav_bg": "#EAEDFF",
-        "nav_border": "#C3C6D7",
-        "card_bg": "#FFFFFF",
-        "card_border": "#E2E7FF",
-        "white_card_bg": "#FFFFFF",
-        "white_card_border": "#DAE2FD",
-        "card_shadow": "0 1px 3px 0 rgba(15, 23, 42, 0.04), 0 1px 2px -1px rgba(15, 23, 42, 0.02)",
-        "text_primary": "#131B2E",
-        "text_secondary": "#434655",
-        "text_muted": "#737686",
-        "accent": "#2563EB",
+        "text_secondary": "#A1A1AA",
+        "text_muted": "#71717A",
+        "accent": "#3F3F46",
         "accent_text": "#FFFFFF",
-        "btn_bg": "linear-gradient(135deg, #2563EB 0%, #004AC6 100%)",
-        "btn_hover": "linear-gradient(135deg, #1D4ED8 0%, #1E40AF 100%)",
-        "btn_border": "#2563EB",
-        "badge_normal_bg": "#ECFDF5",
-        "badge_normal_text": "#065F46",
-        "badge_normal_border": "#A7F3D0",
-        "card1_bg": "linear-gradient(135deg, #EFF6FF 0%, #DAE2FD 100%)",
-        "card1_border": "#BFDBFE",
-        "card1_text": "#131B2E",
-        "card2_bg": "linear-gradient(135deg, #FFFFFF 0%, #F2F3FF 100%)",
-        "card2_border": "#E2E7FF",
-        "card2_text": "#131B2E",
-        "card3_bg": "linear-gradient(135deg, #2563EB 0%, #004AC6 100%)",
-        "card3_border": "#1D4ED8",
+        "btn_bg": "#FFFFFF",
+        "btn_hover": "#E4E4E7",
+        "btn_border": "#FFFFFF",
+        "badge_normal_bg": "#27272A",
+        "badge_normal_text": "#FFFFFF",
+        "badge_normal_border": "rgba(255, 255, 255, 0.12)",
+        "card1_bg": "linear-gradient(135deg, #27272A 0%, #18181B 100%)",
+        "card1_border": "rgba(255, 255, 255, 0.10)",
+        "card1_text": "#FFFFFF",
+        "card2_bg": "linear-gradient(135deg, #202024 0%, #18181B 100%)",
+        "card2_border": "rgba(255, 255, 255, 0.08)",
+        "card2_text": "#FFFFFF",
+        "card3_bg": "linear-gradient(135deg, #27272A 0%, #18181B 100%)",
+        "card3_border": "rgba(255, 255, 255, 0.10)",
         "card3_text": "#FFFFFF",
-        "bar_fill": "linear-gradient(90deg, #82F5C1 0%, #2563EB 100%)",
-        "bar_track": "rgba(37, 99, 235, 0.12)",
-        "chart_bg": "#FFFFFF",
-        "chart_font": "#131B2E",
-        "chart_grid": "rgba(115, 118, 134, 0.15)",
-        "chart_line": "#2563EB",
-        "chart_fill": "rgba(37, 99, 235, 0.10)",
-        "chart_bar_colors": [[0, "#DAE2FD"], [0.5, "#82F5C1"], [1, "#2563EB"]],
-        "gauge_track": "#EAEDFF",
-        "gauge_stop1": "#82F5C1",
-        "gauge_stop2": "#2563EB",
-        "pie_colors": ["#2563EB", "#006C4A", "#AE0010", "#004AC6", "#82F5C1"],
-        "signal_housing": "#EAEDFF",
-        "signal_border": "#DAE2FD"
+        "bar_fill": "linear-gradient(90deg, #FFFFFF 0%, #3F3F46 100%)",
+        "bar_track": "rgba(255, 255, 255, 0.10)",
+        "chart_bg": "#18181B",
+        "chart_font": "#FFFFFF",
+        "chart_grid": "rgba(255, 255, 255, 0.08)",
+        "chart_line": "#FFFFFF",
+        "chart_fill": "rgba(255, 255, 255, 0.10)",
+        "chart_bar_colors": [[0, "#27272A"], [0.5, "#71717A"], [1, "#FFFFFF"]],
+        "gauge_track": "#27272A",
+        "gauge_stop1": "#71717A",
+        "gauge_stop2": "#52525B",
+        "pie_colors": ["#FFFFFF", "#A1A1AA", "#71717A", "#52525B", "#3F3F46"],
+        "signal_housing": "#202024",
+        "signal_border": "rgba(255, 255, 255, 0.10)"
+    },
+    "Neumorphism (Soft UI)": {
+        "name": "Neumorphism (Soft UI)",
+        "app_bg": "#E0E5EC",
+        "sidebar_bg": "#E0E5EC",
+        "sidebar_border": "rgba(255, 255, 255, 0.60)",
+        "nav_bg": "#D9DFE7",
+        "nav_border": "rgba(255, 255, 255, 0.50)",
+        "card_bg": "#E0E5EC",
+        "card_border": "rgba(255, 255, 255, 0.60)",
+        "white_card_bg": "#E0E5EC",
+        "white_card_border": "rgba(255, 255, 255, 0.70)",
+        "card_radius": "20px",
+        "card_shadow": "9px 9px 18px #b8b9be, -9px -9px 18px #ffffff",
+        "card_backdrop": "none",
+        "text_primary": "#2D3748",
+        "text_secondary": "#4A5568",
+        "text_muted": "#718096",
+        "accent": "#FFFFFF",
+        "accent_text": "#1E293B",
+        "btn_bg": "#E0E5EC",
+        "btn_hover": "#FFFFFF",
+        "btn_border": "rgba(255, 255, 255, 0.70)",
+        "badge_normal_bg": "#E0E5EC",
+        "badge_normal_text": "#2D3748",
+        "badge_normal_border": "rgba(255, 255, 255, 0.80)",
+        "card1_bg": "#E0E5EC",
+        "card1_border": "rgba(255, 255, 255, 0.60)",
+        "card1_text": "#2D3748",
+        "card2_bg": "#E0E5EC",
+        "card2_border": "rgba(255, 255, 255, 0.60)",
+        "card2_text": "#2D2520",
+        "card3_bg": "#E0E5EC",
+        "card3_border": "rgba(255, 255, 255, 0.60)",
+        "card3_text": "#2D3748",
+        "bar_fill": "linear-gradient(90deg, #FFFFFF 0%, #A3B1C6 100%)",
+        "bar_track": "rgba(163, 177, 198, 0.35)",
+        "chart_bg": "#E0E5EC",
+        "chart_font": "#2D3748",
+        "chart_grid": "rgba(163, 177, 198, 0.25)",
+        "chart_line": "#4A5568",
+        "chart_fill": "rgba(163, 177, 198, 0.20)",
+        "chart_bar_colors": [[0, "#D9DFE7"], [0.5, "#B8B9BE"], [1, "#FFFFFF"]],
+        "gauge_track": "#D9DFE7",
+        "gauge_stop1": "#B8B9BE",
+        "gauge_stop2": "#4A5568",
+        "pie_colors": ["#FFFFFF", "#B8B9BE", "#A3B1C6", "#718096", "#4A5568"],
+        "signal_housing": "#E0E5EC",
+        "signal_border": "rgba(255, 255, 255, 0.80)"
     }
 }
 
@@ -265,12 +260,267 @@ if active_theme_name not in THEMES:
     active_theme_name = "Soft Sand"
 th = THEMES[active_theme_name]
 
+# Generate Theme-Specific Styling Overrides for Pixel-Perfect Detailing
+theme_custom_css = ""
+if active_theme_name == "Apple Bento":
+    theme_custom_css = """
+    .stApp {
+        background-color: #09090B !important;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif !important;
+    }
+    .dark-card, .ctrl-panel, .white-card, .kpi-card, div[data-testid="stForm"] {
+        background: #18181B !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        border-radius: 24px !important;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.50) !important;
+    }
+    section[data-testid="stSidebar"],
+    section[data-testid="stSidebar"] > div,
+    [data-testid="stSidebarContent"],
+    [data-testid="stSidebarUserContent"],
+    [data-testid="stSidebarHeader"] {
+        background-color: #121215 !important;
+        background: #121215 !important;
+        border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+    }
+    button[data-testid^="stBaseButton"],
+    .stButton button,
+    div[data-testid="stButton"] button {
+        background: #FFFFFF !important;
+        color: #000000 !important;
+        border: none !important;
+        border-radius: 9999px !important;
+        font-weight: 700 !important;
+        box-shadow: 0 4px 14px rgba(255, 255, 255, 0.10) !important;
+    }
+    button[data-testid^="stBaseButton"]:hover,
+    .stButton button:hover,
+    div[data-testid="stButton"] button:hover {
+        background: #E4E4E7 !important;
+        color: #000000 !important;
+    }
+    div[data-testid="stRadio"] [data-testid="stRadioOption"][data-selected="true"],
+    div[data-testid="stRadio"] label:has(input:checked),
+    div[data-testid="stPills"] button[aria-selected="true"],
+    div[data-testid="stPills"] button[data-selected="true"] {
+        background: #FFFFFF !important;
+        color: #000000 !important;
+        border-radius: 9999px !important;
+    }
+    div[data-testid="stRadio"] [data-testid="stRadioOption"][data-selected="true"] p,
+    div[data-testid="stRadio"] [data-testid="stRadioOption"][data-selected="true"] span,
+    div[data-testid="stRadio"] label:has(input:checked) p,
+    div[data-testid="stRadio"] label:has(input:checked) span,
+    div[data-testid="stPills"] button[aria-selected="true"],
+    div[data-testid="stPills"] button[data-selected="true"] {
+        color: #000000 !important;
+        font-weight: 800 !important;
+    }
+    div[data-testid="stPills"] button {
+        border-radius: 9999px !important;
+        background: #18181B !important;
+        border: 1px solid rgba(255, 255, 255, 0.10) !important;
+        color: #A1A1AA !important;
+    }
+    .count-box, .corridor-counts-pill {
+        border-radius: 14px !important;
+        background: #202024 !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    }
+    [data-testid="stFileUploaderDropzone"],
+    section[data-testid="stFileUploaderDropzone"] {
+        background: #18181B !important;
+        border: 1.5px dashed rgba(255, 255, 255, 0.15) !important;
+        border-radius: 20px !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.40) !important;
+    }
+    div[data-testid="stAlert"] {
+        background: #18181B !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        border-radius: 16px !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.40) !important;
+    }
+    """
+elif active_theme_name == "Neumorphism (Soft UI)":
+    theme_custom_css = """
+    .stApp {
+        background-color: #E0E5EC !important;
+        color: #2D3748 !important;
+    }
+    section[data-testid="stSidebar"],
+    section[data-testid="stSidebar"] > div,
+    [data-testid="stSidebarHeader"],
+    [data-testid="stSidebarContent"],
+    [data-testid="stSidebarUserContent"] {
+        background-color: #E0E5EC !important;
+        background: #E0E5EC !important;
+        border-right: 1px solid rgba(255, 255, 255, 0.60) !important;
+        box-shadow: 6px 0 20px rgba(163, 177, 198, 0.35) !important;
+    }
+    .dark-card, .ctrl-panel, .white-card, .kpi-card, div[data-testid="stForm"] {
+        background: #E0E5EC !important;
+        border-radius: 20px !important;
+        border: 1px solid rgba(255, 255, 255, 0.60) !important;
+        box-shadow: 9px 9px 18px #b8b9be, -9px -9px 18px #ffffff !important;
+        color: #2D3748 !important;
+    }
+    button[data-testid^="stBaseButton"],
+    .stButton button,
+    div[data-testid="stButton"] button {
+        background: #E0E5EC !important;
+        color: #1E293B !important;
+        border: 1px solid rgba(255, 255, 255, 0.80) !important;
+        border-radius: 14px !important;
+        box-shadow: 5px 5px 11px #b8b9be, -5px -5px 11px #ffffff !important;
+        font-weight: 700 !important;
+        transition: all 0.18s ease !important;
+    }
+    button[data-testid^="stBaseButton"]:hover,
+    .stButton button:hover,
+    div[data-testid="stButton"] button:hover {
+        background: #FFFFFF !important;
+        color: #000000 !important;
+        box-shadow: inset 3px 3px 6px #b8b9be, inset -3px -3px 6px #ffffff !important;
+        transform: none !important;
+    }
+    div[data-testid="stRadio"] [data-testid="stRadioOption"][data-selected="true"],
+    div[data-testid="stRadio"] label:has(input:checked),
+    div[data-testid="stPills"] button[aria-selected="true"],
+    div[data-testid="stPills"] button[data-selected="true"] {
+        background: #FFFFFF !important;
+        border: 1px solid rgba(255, 255, 255, 0.95) !important;
+        box-shadow: 4px 4px 10px #b8b9be, -4px -4px 10px #ffffff !important;
+    }
+    div[data-testid="stRadio"] [data-testid="stRadioOption"][data-selected="true"] p,
+    div[data-testid="stRadio"] [data-testid="stRadioOption"][data-selected="true"] span,
+    div[data-testid="stRadio"] label:has(input:checked) p,
+    div[data-testid="stRadio"] label:has(input:checked) span,
+    div[data-testid="stPills"] button[aria-selected="true"],
+    div[data-testid="stPills"] button[data-selected="true"] {
+        color: #1E293B !important;
+        font-weight: 800 !important;
+    }
+    div[data-baseweb="select"] > div,
+    .stTextInput input,
+    div[data-testid="stTextInput"] input,
+    div[data-testid="stTextArea"] textarea,
+    .stTextArea textarea,
+    div[data-baseweb="textarea"] textarea {
+        background: #E0E5EC !important;
+        border: 1px solid rgba(255, 255, 255, 0.50) !important;
+        border-radius: 12px !important;
+        box-shadow: inset 3px 3px 7px #b8b9be, inset -3px -3px 7px #ffffff !important;
+        color: #2D3748 !important;
+    }
+    .count-box {
+        background: #E0E5EC !important;
+        border: 1px solid rgba(255, 255, 255, 0.50) !important;
+        border-radius: 12px !important;
+        box-shadow: inset 3px 3px 6px #b8b9be, inset -3px -3px 6px #ffffff !important;
+    }
+    .corridor-counts-pill {
+        background: #E0E5EC !important;
+        border: 1px solid rgba(255, 255, 255, 0.60) !important;
+        border-radius: 16px !important;
+        box-shadow: 5px 5px 11px #b8b9be, -5px -5px 11px #ffffff !important;
+    }
+    .bar-track {
+        background: #D9DFE7 !important;
+        box-shadow: inset 2px 2px 4px #b8b9be, inset -2px -2px 4px #ffffff !important;
+    }
+    [data-testid="stFileUploaderDropzone"],
+    section[data-testid="stFileUploaderDropzone"] {
+        background: #E0E5EC !important;
+        border: 1.5px dashed rgba(255, 255, 255, 0.70) !important;
+        border-radius: 16px !important;
+        box-shadow: inset 3px 3px 6px #b8b9be, inset -3px -3px 6px #ffffff !important;
+    }
+    div[data-testid="stAlert"] {
+        background: #E0E5EC !important;
+        border: 1px solid rgba(255, 255, 255, 0.60) !important;
+        box-shadow: 4px 4px 10px #b8b9be, -4px -4px 10px #ffffff !important;
+        border-radius: 14px !important;
+    }
+    """
+elif active_theme_name == "Neo-Brutalism":
+    theme_custom_css = """
+    .stApp {
+        background-color: #FFFDF0 !important;
+    }
+    .dark-card, .ctrl-panel, .white-card, .kpi-card, div[data-testid="stForm"] {
+        background: #FFFFFF !important;
+        border: 2.5px solid #000000 !important;
+        border-radius: 10px !important;
+        box-shadow: 4px 4px 0px #000000 !important;
+    }
+    section[data-testid="stSidebar"],
+    section[data-testid="stSidebar"] > div,
+    [data-testid="stSidebarContent"],
+    [data-testid="stSidebarUserContent"],
+    [data-testid="stSidebarHeader"] {
+        background-color: #FEF9C3 !important;
+        background: #FEF9C3 !important;
+        border-right: 2.5px solid #000000 !important;
+    }
+    button[data-testid^="stBaseButton"],
+    .stButton button,
+    div[data-testid="stButton"] button {
+        background: linear-gradient(135deg, #FF2E93 0%, #FF007A 100%) !important;
+        color: #FFFFFF !important;
+        border: 2.5px solid #000000 !important;
+        border-radius: 8px !important;
+        box-shadow: 3px 3px 0px #000000 !important;
+        transform: none !important;
+    }
+    button[data-testid^="stBaseButton"]:hover,
+    .stButton button:hover,
+    div[data-testid="stButton"] button:hover {
+        box-shadow: 1px 1px 0px #000000 !important;
+        transform: translate(2px, 2px) !important;
+    }
+    div[data-baseweb="select"] > div,
+    .stTextInput input,
+    div[data-testid="stTextInput"] input,
+    div[data-testid="stTextArea"] textarea,
+    .stTextArea textarea,
+    div[data-baseweb="textarea"] textarea,
+    div[data-testid="stDataFrame"],
+    .corridor-counts-pill,
+    .count-box {
+        border: 2px solid #000000 !important;
+        box-shadow: 3px 3px 0px #000000 !important;
+        border-radius: 8px !important;
+        background: #FFFFFF !important;
+    }
+    [data-testid="stFileUploaderDropzone"],
+    section[data-testid="stFileUploaderDropzone"] {
+        background: #FFFFFF !important;
+        border: 2px dashed #000000 !important;
+        border-radius: 10px !important;
+        box-shadow: 3px 3px 0px #000000 !important;
+    }
+    div[data-testid="stAlert"] {
+        background: #FFFFFF !important;
+        border: 2px solid #000000 !important;
+        box-shadow: 3px 3px 0px #000000 !important;
+        border-radius: 8px !important;
+    }
+    """
+elif active_theme_name == "Soft Sand":
+    theme_custom_css = """
+    .dark-card, .ctrl-panel, .white-card, .kpi-card, div[data-testid="stForm"] {
+        border-radius: 16px !important;
+        box-shadow: 0 6px 22px rgba(143, 133, 124, 0.08) !important;
+    }
+    """
+
 # Static Font Preload (Loaded once so theme switching is instantaneous & never blocks CSSOM)
 st.markdown("""
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,400;1,600;1,700&family=Hanken+Grotesk:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 """, unsafe_allow_html=True)
+
 
 # Dynamic CSS Injection based on chosen theme
 st.markdown(f"""
@@ -284,6 +534,8 @@ st.markdown(f"""
         --text-secondary: {th['text_secondary']};
         --accent: {th['accent']};
     }}
+
+    {theme_custom_css}
 
     /* Hardware-accelerated instantaneous visual theme transition */
     .stApp, section[data-testid="stSidebar"], .kpi-card, .dark-card, .ctrl-panel {{
@@ -321,12 +573,20 @@ st.markdown(f"""
         visibility: hidden !important;
     }}
 
-    /* EXPANDED SIDEBAR COLLAPSE BUTTON */
+    /* EXPANDED SIDEBAR COLLAPSE BUTTON & FULL-HEIGHT THEMED SIDEBAR */
+    section[data-testid="stSidebar"],
+    section[data-testid="stSidebar"] > div,
+    [data-testid="stSidebarContent"],
+    [data-testid="stSidebarUserContent"],
+    [data-testid="stSidebarHeader"] {{
+        background-color: {th['sidebar_bg']} !important;
+        background: {th['sidebar_bg']} !important;
+    }}
     [data-testid="stSidebarCollapseButton"] button,
     [data-testid="stSidebarHeader"] button {{
-        background: {th['card_bg']} !important;
-        border: 1px solid {th['card_border']} !important;
-        color: {th['text_primary']} !important;
+        background: transparent !important;
+        border: 1px solid {th['sidebar_border']} !important;
+        color: {th['text_muted']} !important;
         border-radius: 8px !important;
         cursor: pointer !important;
     }}
@@ -334,6 +594,7 @@ st.markdown(f"""
     [data-testid="stSidebarHeader"] button:hover {{
         background: {th['nav_bg']} !important;
         border-color: {th['accent']} !important;
+        color: {th['text_primary']} !important;
     }}
 
     /* PULL SIDEBAR CONTENT UP TO THE VERY TOP & MAKE COMPACT */
@@ -358,10 +619,12 @@ st.markdown(f"""
         min-height: calc(100vh - 55px) !important;
     }}
     [data-testid="stSidebarHeader"] {{
-        padding: 0 !important;
+        padding: 4px 8px 0 8px !important;
         margin: 0 !important;
-        height: 28px !important;
-        min-height: 28px !important;
+        height: 24px !important;
+        min-height: 24px !important;
+        background-color: {th['sidebar_bg']} !important;
+        background: {th['sidebar_bg']} !important;
     }}
     [data-testid="stSidebarHeader"] button {{
         margin: 0 !important;
@@ -577,25 +840,31 @@ st.markdown(f"""
     .dark-card, .ctrl-panel {{
         background: {th['card_bg']} !important;
         border: 1px solid {th['card_border']} !important;
-        border-radius: 20px !important;
+        border-radius: {th.get('card_radius', '20px')} !important;
         padding: 18px 22px;
         box-shadow: {th['card_shadow']} !important;
         color: {th['text_primary']} !important;
+        backdrop-filter: {th.get('card_backdrop', 'none')} !important;
+        -webkit-backdrop-filter: {th.get('card_backdrop', 'none')} !important;
     }}
     .white-card {{
         background: {th['white_card_bg']} !important;
         border: 1px solid {th['white_card_border']} !important;
-        border-radius: 20px !important;
+        border-radius: {th.get('card_radius', '20px')} !important;
         padding: 20px !important;
         box-shadow: {th['card_shadow']} !important;
         color: {th['text_primary']} !important;
+        backdrop-filter: {th.get('card_backdrop', 'none')} !important;
+        -webkit-backdrop-filter: {th.get('card_backdrop', 'none')} !important;
     }}
     .kpi-card {{
-        background: {th['card_bg']};
-        border: 1px solid {th['card_border']};
-        border-radius: 16px;
+        background: {th['card_bg']} !important;
+        border: 1px solid {th['card_border']} !important;
+        border-radius: {th.get('card_radius', '16px')} !important;
         padding: 1rem 1.25rem;
         box-shadow: {th['card_shadow']} !important;
+        backdrop-filter: {th.get('card_backdrop', 'none')} !important;
+        -webkit-backdrop-filter: {th.get('card_backdrop', 'none')} !important;
     }}
     .kpi-label {{
         color: {th['text_muted']};
@@ -621,7 +890,9 @@ st.markdown(f"""
     .card-emerald-gradient {{
         background: {th['card1_bg']} !important;
         border: 1px solid {th['card1_border']} !important;
-        border-radius: 20px;
+        border-radius: {th.get('card_radius', '20px')};
+        backdrop-filter: {th.get('card_backdrop', 'none')};
+        -webkit-backdrop-filter: {th.get('card_backdrop', 'none')};
         padding: 18px 20px;
         color: {th['card1_text']} !important;
         margin-bottom: 1rem;
@@ -654,7 +925,9 @@ st.markdown(f"""
     .card-teal-glass {{
         background: {th['card2_bg']} !important;
         border: 1px solid {th['card2_border']} !important;
-        border-radius: 20px;
+        border-radius: {th.get('card_radius', '20px')};
+        backdrop-filter: {th.get('card_backdrop', 'none')};
+        -webkit-backdrop-filter: {th.get('card_backdrop', 'none')};
         padding: 18px 20px;
         color: {th['card2_text']} !important;
         margin-bottom: 1rem;
@@ -692,7 +965,9 @@ st.markdown(f"""
     .card-blue-cyan-gradient {{
         background: {th['card3_bg']} !important;
         border: 1px solid {th['card3_border']} !important;
-        border-radius: 20px;
+        border-radius: {th.get('card_radius', '20px')};
+        backdrop-filter: {th.get('card_backdrop', 'none')};
+        -webkit-backdrop-filter: {th.get('card_backdrop', 'none')};
         padding: 20px 22px;
         color: {th['card3_text']} !important;
     }}
@@ -717,7 +992,7 @@ st.markdown(f"""
     .stButton button,
     .stDownloadButton button {{
         background: {th['btn_bg']} !important;
-        color: {'#000000' if active_theme_name == 'Black & White' and False else '#FFFFFF'} !important;
+        color: {th['accent_text']} !important;
         border: 1px solid {th['btn_border']} !important;
         border-radius: 14px !important;
         font-weight: 700 !important;
@@ -734,7 +1009,7 @@ st.markdown(f"""
     .stButton button:hover,
     .stDownloadButton button:hover {{
         background: {th['btn_hover']} !important;
-        color: {'#000000' if active_theme_name == 'Black & White' else '#FFFFFF'} !important;
+        color: {th['accent_text']} !important;
         transform: translateY(-2px) !important;
     }}
 
@@ -778,42 +1053,53 @@ st.markdown(f"""
         background: {th['card_bg']} !important;
         overflow: hidden !important;
     }}
-    div[data-baseweb="select"] {{
-        cursor: pointer !important;
-        pointer-events: auto !important;
+    .st-key-header_theme_selector {{
+        margin-top: -3px !important;
+        padding: 0 !important;
+    }}
+    div[data-baseweb="select"],
+    div[data-baseweb="select"] > div,
+    div[data-baseweb="select"] [role="combobox"],
+    div[data-baseweb="select"] div {{
+        background-color: {th['card_bg']} !important;
+        color: {th['text_primary']} !important;
     }}
     div[data-baseweb="select"] > div {{
-        background-color: {th['card_bg']} !important;
         border: 1.5px solid {th['card_border']} !important;
-        color: {th['text_primary']} !important;
-        border-radius: 12px !important;
-        cursor: pointer !important;
+        border-radius: {th.get('card_radius', '12px')} !important;
         box-shadow: {th['card_shadow']} !important;
+        cursor: pointer !important;
         transition: all 0.2s ease !important;
     }}
     div[data-baseweb="select"] > div:hover {{
         border-color: {th['accent']} !important;
     }}
+    div[data-baseweb="select"] span,
+    div[data-baseweb="select"] svg {{
+        color: {th['text_primary']} !important;
+        fill: {th['text_primary']} !important;
+    }}
+    /* Dropdown Popover Menus (Appended to body in Streamlit) */
     div[data-baseweb="popover"],
+    div[data-baseweb="popover"] > div,
     div[data-baseweb="menu"],
+    div[data-baseweb="menu"] > div,
+    ul[role="listbox"],
     [data-testid="stSelectboxVirtualDropdown"] {{
         z-index: 99999999 !important;
         pointer-events: auto !important;
-    }}
-    div[data-baseweb="popover"] ul,
-    div[data-baseweb="menu"] ul,
-    ul[role="listbox"] {{
         background-color: {th['card_bg']} !important;
+        background: {th['card_bg']} !important;
         border: 1.5px solid {th['card_border']} !important;
-        border-radius: 12px !important;
-        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.22) !important;
+        border-radius: {th.get('card_radius', '12px')} !important;
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28) !important;
         padding: 6px !important;
     }}
     div[data-baseweb="popover"] li,
     div[data-baseweb="menu"] li,
     li[role="option"] {{
         color: {th['text_primary']} !important;
-        background-color: transparent !important;
+        background-color: {th['card_bg']} !important;
         font-weight: 600 !important;
         font-size: 0.88rem !important;
         padding: 9px 14px !important;
@@ -822,21 +1108,115 @@ st.markdown(f"""
         cursor: pointer !important;
         transition: all 0.15s ease !important;
     }}
+    div[data-baseweb="popover"] li *,
+    div[data-baseweb="menu"] li *,
+    li[role="option"] * {{
+        color: {th['text_primary']} !important;
+    }}
     div[data-baseweb="popover"] li:hover,
     div[data-baseweb="menu"] li:hover,
     li[role="option"]:hover,
-    li[aria-selected="true"] {{
+    li[aria-selected="true"],
+    div[data-baseweb="menu"] li[aria-selected="true"] {{
         background-color: {th['nav_bg']} !important;
-        color: {th['accent']} !important;
     }}
-    .stTextInput input {{
-        background-color: {th['card_bg']} !important;
-        border: 1px solid {th['card_border']} !important;
+    div[data-baseweb="popover"] li:hover *,
+    div[data-baseweb="menu"] li:hover *,
+    li[role="option"]:hover *,
+    li[aria-selected="true"] *,
+    div[data-baseweb="menu"] li[aria-selected="true"] * {{
         color: {th['text_primary']} !important;
-        border-radius: 12px !important;
+        font-weight: 700 !important;
     }}
+    /* UNIVERSAL FORM INPUTS, TEXTAREA & SELECTBOX THEME INTEGRATION */
+    div[data-testid="stForm"] {{
+        background: {th['card_bg']} !important;
+        border: 1px solid {th['card_border']} !important;
+        border-radius: {th.get('card_radius', '16px')} !important;
+        padding: 1.5rem !important;
+        box-shadow: {th['card_shadow']} !important;
+    }}
+    div[data-testid="stForm"] label,
+    div[data-testid="stForm"] label p {{
+        color: {th['text_primary']} !important;
+        font-weight: 600 !important;
+    }}
+    .stTextInput input,
+    div[data-baseweb="input"] input,
+    div[data-testid="stTextInput"] input,
+    div[data-testid="stTextArea"] textarea,
+    .stTextArea textarea,
+    div[data-baseweb="textarea"] textarea,
+    div[data-baseweb="base-input"] textarea {{
+        background-color: {th['card_bg']} !important;
+        border: 1.5px solid {th['card_border']} !important;
+        color: {th['text_primary']} !important;
+        border-radius: {th.get('card_radius', '12px')} !important;
+        font-family: inherit !important;
+    }}
+    div[data-testid="stTextArea"] textarea:focus,
+    .stTextArea textarea:focus,
     .stTextInput input:focus {{
         border-color: {th['accent']} !important;
+    }}
+    div[data-baseweb="select"] * {{
+        color: {th['text_primary']} !important;
+    }}
+    div[data-baseweb="input"],
+    div[data-baseweb="base-input"],
+    div[data-baseweb="textarea"] {{
+        background-color: {th['card_bg']} !important;
+        border-color: {th['card_border']} !important;
+    }}
+
+    /* FILE UPLOADER & DROPZONE DYNAMIC THEME STYLING */
+    div[data-testid="stFileUploader"],
+    [data-testid="stFileUploaderDropzone"],
+    section[data-testid="stFileUploaderDropzone"],
+    div[data-testid="stFileUploader"] section {{
+        background-color: {th['card_bg']} !important;
+        border: 1.5px dashed {th['card_border']} !important;
+        border-radius: {th.get('card_radius', '16px')} !important;
+        color: {th['text_primary']} !important;
+        box-shadow: {th['card_shadow']} !important;
+    }}
+    [data-testid="stFileUploaderDropzone"] div:not(button) {{
+        background-color: transparent !important;
+    }}
+    [data-testid="stFileUploaderDropzone"] span,
+    [data-testid="stFileUploaderDropzone"] small,
+    [data-testid="stFileUploaderDropzone"] p,
+    [data-testid="stFileUploaderDropzone"] div {{
+        color: {th['text_secondary']} !important;
+    }}
+    [data-testid="stFileUploaderDropzone"] button,
+    div[data-testid="stFileUploader"] button {{
+        background: {th['btn_bg']} !important;
+        color: {th['accent_text']} !important;
+        border: 1px solid {th['btn_border']} !important;
+        border-radius: 12px !important;
+        font-weight: 700 !important;
+    }}
+    [data-testid="stFileUploaderDropzone"] button:hover,
+    div[data-testid="stFileUploader"] button:hover {{
+        background: {th['btn_hover']} !important;
+        color: {th['accent_text']} !important;
+    }}
+    div[data-testid="stAlert"],
+    div[data-testid="stAlert"] > div {{
+        background-color: {th['card_bg']} !important;
+        border: 1px solid {th['card_border']} !important;
+        border-radius: {th.get('card_radius', '12px')} !important;
+        box-shadow: {th['card_shadow']} !important;
+    }}
+    div[data-testid="stAlert"] *,
+    div[data-testid="stAlert"] p,
+    div[data-testid="stAlert"] span {{
+        color: {th['text_primary']} !important;
+    }}
+    div[data-testid="stAlert"] svg {{
+        fill: {th['accent']} !important;
+        color: {th['accent']} !important;
     }}
     .ctrl-panel-title {{
         color: {th['text_primary']} !important;
@@ -973,7 +1353,7 @@ if "nav_section" not in st.session_state or st.session_state.get("nav_section") 
 with st.sidebar:
     # Compact logo & header pulled to the very top
     st.markdown(f"""
-    <div style="padding: 0 0 0.35rem 0; margin-top: -0.2rem;">
+    <div style="padding: 0 0 0.25rem 0; margin-top: -1.3rem;">
         <div style="display: flex; align-items: center; gap: 9px;">
             <div style="width: 30px; height: 30px; border-radius: 8px; background: {th['btn_bg']}; display: flex; align-items: center; justify-content: center; color: #FFFFFF; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);">
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
@@ -1069,27 +1449,28 @@ top_c1, top_c2, top_c3 = st.columns([64, 13, 23], vertical_alignment="center")
 with top_c1:
     st.markdown(f"""
     <div style="display: flex; align-items: center; gap: 8px; height: 38px;">
-        <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: {'#10B981' if active_theme_name != 'Black & White' else '#FFFFFF'}; box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);"></span>
+        <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10B981; box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);"></span>
         <span style="font-size: 0.78rem; font-weight: 700; color: {th['text_muted']}; letter-spacing: 0.6px; text-transform: uppercase;">AIBST TRAFFIC CONTROL SYSTEM</span>
     </div>
     """, unsafe_allow_html=True)
 
 with top_c2:
     st.markdown(f"""
-    <div style="display: flex; align-items: center; justify-content: flex-end; gap: 6px; height: 38px;">
+    <div style="display: flex; align-items: center; justify-content: flex-end; gap: 6px; height: 42px; padding-top: 5px;">
         <span style="font-size: 0.88rem;">🎨</span>
         <span style="font-size: 0.82rem; font-weight: 700; color: {th['text_primary']}; white-space: nowrap;">Colour Theme:</span>
     </div>
     """, unsafe_allow_html=True)
 
 with top_c3:
-    theme_list = ["Soft Sand", "Silver & White", "Black & White", "Nordic Civic Minimal"]
+    theme_list = list(THEMES.keys())
     c_idx = theme_list.index(active_theme_name) if active_theme_name in theme_list else 0
 
     def _on_header_theme_change():
         sel = st.session_state.get("header_theme_selector")
         if sel and sel in THEMES:
             st.session_state["color_theme"] = sel
+            st.rerun()
 
     st.selectbox(
         "Colour Theme Selector",
@@ -1099,49 +1480,6 @@ with top_c3:
         key="header_theme_selector",
         on_change=_on_header_theme_change
     )
-
-    # Instant Client-Side Theme Switcher (Zero-Latency DOM Reaction on Click)
-    st.markdown("""
-    <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg'/>" onerror="
-    (function(){
-        var PAL = {
-            'Soft Sand': { bg: '#F5F2EC', side: '#EFECE6', card: '#F8F5F1', border: '#D8C2B3', text: '#2D2520' },
-            'Silver & White': { bg: '#F8F9FA', side: '#E9ECEF', card: '#FFFFFF', border: '#D0D5DD', text: '#0F172A' },
-            'Black & White': { bg: '#000000', side: '#0A0A0A', card: '#121212', border: '#2A2A2A', text: '#FFFFFF' },
-            'Nordic Civic Minimal': { bg: '#F4F6FB', side: '#EBF0FA', card: '#FFFFFF', border: '#DCE3F1', text: '#1A2238' }
-        };
-        function switchNow(name){
-            for (var k in PAL){
-                if (name.indexOf(k) !== -1 || k.indexOf(name) !== -1){
-                    var c = PAL[k];
-                    var app = document.querySelector('.stApp');
-                    if (app) { app.style.backgroundColor = c.bg; app.style.color = c.text; }
-                    var side = document.querySelector('section[data-testid=\'stSidebar\']');
-                    if (side) { side.style.backgroundColor = c.side; }
-                    var cards = document.querySelectorAll('.kpi-card, .dark-card, .ctrl-panel');
-                    for (var i=0; i<cards.length; i++) {
-                        cards[i].style.backgroundColor = c.card;
-                        cards[i].style.borderColor = c.border;
-                        cards[i].style.color = c.text;
-                    }
-                    break;
-                }
-            }
-        }
-        if (!window._stFastThemeHook) {
-            window._stFastThemeHook = true;
-            document.addEventListener('click', function(e){
-                var el = e.target;
-                var opt = el.closest('[role=\'option\']') || el.closest('li') || el.closest('[data-baseweb=\'menu\'] div');
-                if (opt) {
-                    var txt = (opt.textContent || opt.innerText || '').trim();
-                    switchNow(txt);
-                }
-            }, true);
-        }
-    })();
-    " style="display:none;" />
-    """, unsafe_allow_html=True)
 
 st.markdown(f'<hr style="border: 0; border-top: 1px solid {th["nav_border"]}; margin: 0.4rem 0 1rem 0;">', unsafe_allow_html=True)
 
@@ -1438,14 +1776,6 @@ if selected_nav == "Vehicle Detection & Counting":
                 if run_image_clicked:
                     try:
                         import cv2
-                        import importlib
-                        import core.detection.vehicle_detector
-                        import core.tracking.tracker
-                        import core.detection.vision_engine
-                        importlib.reload(core.detection.vehicle_detector)
-                        importlib.reload(core.tracking.tracker)
-                        importlib.reload(core.detection.vision_engine)
-                        from core.detection.vision_engine import VisionEngine
                         existing_sessions = db.get_video_sessions() if hasattr(db, "get_video_sessions") else []
                         v_base = os.path.basename(selected_video) if selected_video else "Photo"
                         current_video_label = f"Video {len(existing_sessions) + 1} ({v_base})"
@@ -1512,14 +1842,6 @@ if selected_nav == "Vehicle Detection & Counting":
 
                     try:
                         import cv2
-                        import importlib
-                        import core.detection.vehicle_detector
-                        import core.tracking.tracker
-                        import core.detection.vision_engine
-                        importlib.reload(core.detection.vehicle_detector)
-                        importlib.reload(core.tracking.tracker)
-                        importlib.reload(core.detection.vision_engine)
-                        from core.detection.vision_engine import VisionEngine
 
                         existing_sessions = db.get_video_sessions() if hasattr(db, "get_video_sessions") else []
                         v_base = os.path.basename(selected_video) if selected_video else "Upload"
@@ -2143,13 +2465,29 @@ elif selected_nav == "Adaptive Traffic Light Signal":
     components.html(sim_code, height=1580, scrolling=True)
 
 # =====================================================================
-# 3. CONTACT US / REPORT A PROBLEM (DEDICATED SECTION)
+# 4. CONTACT US / REPORT A PROBLEM (DEDICATED SECTION)
 # =====================================================================
 elif selected_nav == "Contact Us / Report a Problem":
-    # ---- EmailJS Configuration (using existing account credentials) ----
-    EMAILJS_SERVICE_ID = "service_hjzsn55"
-    EMAILJS_TEMPLATE_ID = "template_7i98nki"
-    EMAILJS_PUBLIC_KEY = "AFcI5Trke2PpJ6-fe"
+    # ---- EmailJS Configuration (supports environment variables or secrets with fallback) ----
+    _s_dict = {}
+    try:
+        if hasattr(st, "secrets"):
+            _s_dict = st.secrets
+    except Exception:
+        _s_dict = {}
+
+    def _get_conf(key, default):
+        val = os.getenv(key)
+        if val:
+            return val
+        try:
+            return _s_dict.get(key, default)
+        except Exception:
+            return default
+
+    EMAILJS_SERVICE_ID = _get_conf("EMAILJS_SERVICE_ID", "service_hjzsn55")
+    EMAILJS_TEMPLATE_ID = _get_conf("EMAILJS_TEMPLATE_ID", "template_7i98nki")
+    EMAILJS_PUBLIC_KEY = _get_conf("EMAILJS_PUBLIC_KEY", "AFcI5Trke2PpJ6-fe")
 
     st.markdown(f"""
     <div style="
@@ -2171,30 +2509,21 @@ elif selected_nav == "Contact Us / Report a Problem":
     with st.form("contact_support_form", clear_on_submit=True):
         st.markdown(f"""
         <div style="
-            background: {th['card_bg']};
-            border: 1px solid {th['card_border']};
-            border-radius: 16px;
-            padding: 1.5rem 1.8rem 0.8rem 1.8rem;
-            box-shadow: {th['card_shadow']};
-            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 1.2rem;
+            padding-bottom: 0.8rem;
+            border-bottom: 1px solid {th['card_border']};
         ">
-            <div style="
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                margin-bottom: 1.2rem;
-                padding-bottom: 0.8rem;
-                border-bottom: 1px solid {th['card_border']};
-            ">
-                <span style="font-size: 1.1rem;">📋</span>
-                <span style="
-                    color: {th['text_primary']};
-                    font-size: 0.85rem;
-                    font-weight: 700;
-                    text-transform: uppercase;
-                    letter-spacing: 0.5px;
-                ">Support Request Form</span>
-            </div>
+            <span style="font-size: 1.1rem;">📋</span>
+            <span style="
+                color: {th['text_primary']};
+                font-size: 0.85rem;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            ">Support Request Form</span>
         </div>
         """, unsafe_allow_html=True)
 

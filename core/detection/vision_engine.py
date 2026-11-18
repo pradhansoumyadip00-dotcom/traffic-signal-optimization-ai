@@ -134,7 +134,7 @@ class VisionEngine:
                             track_id=idx + 1,
                             confidence=det["confidence"],
                             plate_number="",
-                            lane_id=(idx % 4) + 1,
+                            lane_id=(idx % 4),
                             speed_estimate=38.0,
                             video_source=v_source
                         )
@@ -158,7 +158,7 @@ class VisionEngine:
                                 track_id=tid,
                                 confidence=obj["confidence"],
                                 plate_number="",
-                                lane_id=obj["lane_id"] + 1,
+                                lane_id=obj["lane_id"],
                                 speed_estimate=obj.get("speed", 38.0),
                                 video_source=v_source
                             )
@@ -198,6 +198,36 @@ class VisionEngine:
             cv2.rectangle(annotated, (x1, by1), (x1 + tw + 6, by2), color, -1)
             cv2.putText(annotated, badge_text, (x1 + 3, ty), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 0), 1, cv2.LINE_AA)
 
+        # 5. Safety & Incident Enforcement (Helmet Violations & Accident Detection)
+        helmet_alerts = self.helmet_detector.detect(enhanced_frame, tracked_objects)
+        accident_alerts = self.accident_detector.detect(enhanced_frame, tracked_objects)
+
+        for h_alert in helmet_alerts:
+            self.last_helmet_alert = h_alert
+            hx1, hy1, hx2, hy2 = h_alert["bbox"]
+            cv2.rectangle(annotated, (hx1, hy1), (hx2, hy2), self.COLOR_MAP["Violation"], 2)
+            cv2.putText(annotated, f"NO HELMET ({int(h_alert['confidence']*100)}%)", (hx1, max(12, hy1 - 4)),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.42, self.COLOR_MAP["Violation"], 1, cv2.LINE_AA)
+            if record_to_db and (frame_idx % 15 == 0 or frame_idx <= 1):
+                self.db.log_helmet_violation(
+                    confidence=h_alert["confidence"],
+                    plate_number="",
+                    track_id=h_alert.get("track_id", 0)
+                )
+
+        for a_alert in accident_alerts:
+            self.last_accident_alert = a_alert
+            ax1, ay1, ax2, ay2 = a_alert["bbox"]
+            cv2.rectangle(annotated, (ax1, ay1), (ax2, ay2), self.COLOR_MAP["Accident"], 3)
+            cv2.putText(annotated, f"INCIDENT: {a_alert.get('severity', 'High').upper()}", (ax1, max(14, ay1 - 6)),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.50, self.COLOR_MAP["Accident"], 2, cv2.LINE_AA)
+            if record_to_db and (frame_idx % 25 == 0 or frame_idx <= 1):
+                self.db.log_accident(
+                    confidence=a_alert["confidence"],
+                    severity=a_alert.get("severity", "Medium"),
+                    lane_id=a_alert.get("lane_id", 0)
+                )
+
         # Draw HUD Stats Overlay (top right)
         active_counts = track_result.get("active_class_counts", track_result["class_counts"])
         active_total = len(tracked_objects) if tracked_objects else track_result["total_count"]
@@ -227,8 +257,8 @@ class VisionEngine:
             "lane_counts": track_result["lane_counts"],
             "is_night": is_night,
             "active_vehicles": active_total,
-            "last_helmet_alert": None,
-            "last_accident_alert": None
+            "last_helmet_alert": self.last_helmet_alert,
+            "last_accident_alert": self.last_accident_alert
         }
 
         return annotated, stats_return

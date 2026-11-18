@@ -167,11 +167,14 @@ class VehicleDetector:
                                 "confidence": round(conf, 3),
                             })
 
-                # Rider fusion: if a person is on/near a bike, ensure bike is tracked
+                # Rider fusion: expand motorcycle bounding box to cleanly encompass rider head/body
                 for px1, py1, px2, py2 in person_boxes:
-                    for bx1, by1, bx2, by2 in bike_boxes:
-                        if not (px2 < bx1 or px1 > bx2 or py2 < by1 or py1 > by2):
-                            break
+                    for det in detections:
+                        if det.get("class") == "Motorcycle":
+                            bx1, by1, bx2, by2 = det["bbox"]
+                            if not (px2 < bx1 or px1 > bx2 or py2 < by1 or py1 > by2):
+                                det["bbox"] = [min(bx1, px1), min(by1, py1), max(bx2, px2), max(by2, py2)]
+                                break
             except Exception:
                 pass
 

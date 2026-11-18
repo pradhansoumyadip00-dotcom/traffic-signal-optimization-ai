@@ -7,6 +7,7 @@ safe state transitions (Yellow/All-Red), and emergency override.
 
 import sys
 import os
+import unittest
 from pathlib import Path
 
 # Add project root to path
@@ -94,6 +95,11 @@ def run_tests():
     print("=" * 60)
     print("  ALL ADAPTIVE SIGNAL AGENT TESTS PASSED (100% SUCCESS)!")
     print("=" * 60)
+
+
+class TestSignalController(unittest.TestCase):
+    def test_signal_controller_suite(self):
+        run_tests()
 
 
 if __name__ == "__main__":

@@ -7,6 +7,7 @@ time filtering, aggregation, and Excel/CSV exporting.
 
 import sys
 import os
+import unittest
 from pathlib import Path
 
 # Add project root to path
@@ -110,6 +111,11 @@ def run_tests():
     print("=" * 60)
     print("  ALL DATABASE ENGINE TESTS PASSED (100% SUCCESS)!")
     print("=" * 60)
+
+
+class TestDatabase(unittest.TestCase):
+    def test_database_suite(self):
+        run_tests()
 
 
 if __name__ == "__main__":

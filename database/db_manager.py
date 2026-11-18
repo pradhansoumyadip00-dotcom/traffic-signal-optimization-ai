@@ -60,8 +60,13 @@ class DatabaseManager:
 
         db_path = Path(SQLITE_DB_PATH)
         db_path.parent.mkdir(parents=True, exist_ok=True)
-        self.connection = sqlite3.connect(str(db_path), check_same_thread=False)
+        self.connection = sqlite3.connect(str(db_path), check_same_thread=False, timeout=15.0)
         self.connection.row_factory = dict_factory
+        try:
+            self.connection.execute("PRAGMA journal_mode=WAL;")
+            self.connection.execute("PRAGMA synchronous=NORMAL;")
+        except Exception:
+            pass
 
     def _get_cursor(self):
         """Returns cursor with dictionary row support across both SQLite and MySQL."""
@@ -419,10 +424,8 @@ class DatabaseManager:
             pdf.ln(2)
             pdf.cell(50, 7, "Timestamp", border=1, fill=True)
             pdf.cell(45, 7, "Severity", border=1, fill=True)
-            lane_num = int(row.get('lane_id') or 0) + 1
-            pdf.cell(45, 7, f"Corridor {lane_num}", border=1)
-            conf_val = float(row.get('confidence') or 0.0)
-            pdf.cell(50, 7, f"{conf_val:.2f}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, border=1)
+            pdf.cell(45, 7, "Corridor", border=1, fill=True)
+            pdf.cell(50, 7, "Confidence", new_x=XPos.LMARGIN, new_y=YPos.NEXT, border=1, fill=True)
 
             pdf.set_font("helvetica", "", 9)
             for row in accidents[:10]:

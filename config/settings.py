@@ -28,7 +28,6 @@ DETECTION_CONFIDENCE = 0.28
 IOU_THRESHOLD = 0.45
 
 VEHICLE_CLASSES = {
-    0: "Motorcycle",  # motorcycle/scooter rider
     1: "Motorcycle",  # bicycle / moped / two-wheeler
     2: "Car",         # passenger car / sedan / suv / taxi
     3: "Motorcycle",  # motorcycle / scooter

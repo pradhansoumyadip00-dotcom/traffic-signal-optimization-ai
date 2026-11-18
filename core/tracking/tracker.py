@@ -81,15 +81,17 @@ class VehicleTracker:
         return min(max(0, lane), NUM_LANES - 1)
 
     def estimate_speed(self, prev_pos: tuple, curr_pos: tuple, frame_diff: int, fps: float = 25.0) -> float:
-        """Estimate realistic road vehicle speed in km/h."""
+        """Estimate realistic road vehicle speed in km/h. Returns 0.0 for stopped vehicles."""
         if frame_diff <= 0:
-            return 38.0
+            return 0.0
         dist_px = np.sqrt((curr_pos[0] - prev_pos[0])**2 + (curr_pos[1] - prev_pos[1])**2)
+        if dist_px < 2.5:
+            return 0.0
         dist_meters = dist_px / 14.0
         time_sec = frame_diff / fps
         speed_mps = dist_meters / max(time_sec, 0.04)
         speed_kmh = speed_mps * 3.6
-        return round(float(np.clip(speed_kmh, 20.0, 80.0)), 1)
+        return round(float(np.clip(speed_kmh, 0.0, 90.0)), 1)
 
     def track_frame(self, frame: np.ndarray, frame_idx: int = 0, line_ratio: float = None) -> dict:
         """
@@ -207,7 +209,7 @@ class VehicleTracker:
                                 "track_id": tid,
                                 "class": confirmed_class,
                                 "confidence": det["confidence"],
-                                "lane_id": det["lane_id"] + 1,
+                                "lane_id": det["lane_id"],
                                 "speed": speed
                             })
                         else:
